@@ -27,7 +27,7 @@ https:\/\/pan\.baidu\.com\/rest\/\d\.\d\/membership\/user url script-response-bo
 
 # G
 # GreasyFork油猴脚本转换器
-https:\/\/greasyfork\.org\/scripts\/.*\.user\.js url script-response-body https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/greasy-fork.js
+https:\/\/greasyfork\.org\/scripts\/.*\.user\.js url script-response-body https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/quantumultx/scripts/Scheduled%20Tasks/greasy-fork.js
 
 # (复写)部分raw.githubusercontent走cdn
 //^(http|https):\/\/raw\.githubusercontent\.com\/(DivineEngine|lhie1)\/(.+?)\/(master|main)\/(.+) url 302 https://cdn.jsdelivr.net/gh/$2/$3/$5
@@ -47,18 +47,18 @@ https:\/\/greasyfork\.org\/scripts\/.*\.user\.js url script-response-body https:
 //^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig|basicConfig) url script-response-body https://raw.githubusercontent.com/Tartarus2014/Script/master/jd_price_lite.js
 
 # 京东登入辅助(用新版)
-//^https?:\/\/home\.m\.jd\.com\/userinfom\/QueryUserInfoM url script-response-body https://raw.githubusercontent.com/cjf935257177/QuantumultX/master/script/Scheduled%20Tasks/jd_login_help.js
-//^https?:\/\/plogin\.m\.jd\.com\/login\/login url script-response-body https://raw.githubusercontent.com/cjf935257177/QuantumultX/master/script/Scheduled%20Tasks/jd_login_help.js
+//^https?:\/\/home\.m\.jd\.com\/userinfom\/QueryUserInfoM url script-response-body https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/quantumultx/scripts/Scheduled%20Tasks/jd_login_help.js
+//^https?:\/\/plogin\.m\.jd\.com\/login\/login url script-response-body https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/quantumultx/scripts/Scheduled%20Tasks/jd_login_help.js
 
 # 京东宠汪汪赛跑(失效)
-//^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/api\/user\/user\/detail\?openId= url script-request-header https://raw.githubusercontent.com/cjf935257177/Loon/master/jd_scripts/jd_joy_run.js
-//^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/api\/user\/addUser\?code= url script-response-body https://raw.githubusercontent.com/cjf935257177/Loon/master/jd_scripts/jd_joy_run.js
+//^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/api\/user\/user\/detail\?openId= url script-request-header https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/archive/jd-scripts/jd_joy_run.js
+//^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/api\/user\/addUser\?code= url script-response-body https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/archive/jd-scripts/jd_joy_run.js
 
 # 京东宠汪汪强制为别人助力(失效)
-//^https:\/\/draw\.jdfcloud\.com\/\/common\/pet\/enterRoom\/h5\?invitePin=.*(&inviteSource=task_invite&shareSource=\w+&inviteTimeStamp=\d+&openId=\w+)?&reqSource=weapp|^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/pet\/helpFriend\?friendPin url script-request-header https://raw.githubusercontent.com/cjf935257177/Loon/master/jd_scripts/jd_joy_help.js
+//^https:\/\/draw\.jdfcloud\.com\/\/common\/pet\/enterRoom\/h5\?invitePin=.*(&inviteSource=task_invite&shareSource=\w+&inviteTimeStamp=\d+&openId=\w+)?&reqSource=weapp|^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/pet\/helpFriend\?friendPin url script-request-header https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/archive/jd-scripts/jd_joy_help.js
 
 # 京东聚宝盆投狗粮辅助(失效)
-//^https:\/\/jdjoy\.jd\.com\/pet\/getPetTreasureBox|^https:\/\/draw\.jdfcloud\.com\/\/pet\/getPetTreasureBox url script-response-body https://raw.githubusercontent.com/cjf935257177/QuantumultX/master/script/jd_scripts/jd_petTreasureBox.js
+//^https:\/\/jdjoy\.jd\.com\/pet\/getPetTreasureBox|^https:\/\/draw\.jdfcloud\.com\/\/pet\/getPetTreasureBox url script-response-body https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/quantumultx/scripts/jd_scripts/jd_petTreasureBox.js
 
 # K
 
@@ -91,8 +91,8 @@ https:\/\/greasyfork\.org\/scripts\/.*\.user\.js url script-response-body https:
 # T
 # 淘宝比价
 # 历史价格在“保障”中显示，需要点击“保障”才能看到.
-^http://.+/amdc/mobileDispatch url script-request-body https://raw.githubusercontent.com/cjf0423/QuantumultX/refs/heads/master/script/Scheduled%20Tasks/jd_tb_price_main.js
-^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail url script-response-body https://raw.githubusercontent.com/cjf0423/QuantumultX/refs/heads/master/script/Scheduled%20Tasks/jd_tb_price_main.js
+^http://.+/amdc/mobileDispatch url script-request-body https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/quantumultx/scripts/Scheduled%20Tasks/jd_tb_price_main.js
+^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail url script-response-body https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/quantumultx/scripts/Scheduled%20Tasks/jd_tb_price_main.js
 
 # U
 

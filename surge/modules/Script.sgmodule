@@ -11,7 +11,7 @@ force-http-engine-hosts = %APPEND% boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.ne
 
 # B
 # 哔哩哔哩开启1080
-哔哩哔哩开启1080 = type=http-response,pattern=https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf935257177/QuantumultX/master/script/Scheduled%20Tasks/BiliHD.js,script-update-interval=0
+哔哩哔哩开启1080 = type=http-response,pattern=https:\/\/ap(p|i)\.bilibili\.com\/((pgc\/player\/api\/playurl)|(x\/v2\/account\/myinfo\?)|(x\/v2\/account/mine\?)),requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/quantumultx/scripts/Scheduled%20Tasks/BiliHD.js,script-update-interval=0
 
 # BoxJs
 BoxJs = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-path=https://raw.githubusercontent.com/chavyleung/scripts/master/box/chavy.boxjs.js, requires-body=true, timeout=120
@@ -29,7 +29,7 @@ BoxJs = type=http-request,pattern=^https?:\/\/(.+\.)?boxjs\.(com|net),script-pat
 
 # G
 # GreasyFork油猴脚本转换器
-GreasyFork油猴脚本转换器 = type=http-response,pattern=^https:\/\/(greasyfork|openuserjs)\.org\/.*\/.*\.user\.js,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/greasy-fork.js,script-update-interval=0
+GreasyFork油猴脚本转换器 = type=http-response,pattern=^https:\/\/(greasyfork|openuserjs)\.org\/.*\/.*\.user\.js,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/quantumultx/scripts/Scheduled%20Tasks/greasy-fork.js,script-update-interval=0
 
 # H
 

@@ -60,7 +60,7 @@ stream-all = type=generic, timeout=15, script-path=https://raw.githubusercontent
 //covid19 = type=generic, script-path=https://raw.githubusercontent.com/TributePaulWalker/Profiles/main/JavaScript/Surge/Covid19.js
 
 # 快速切换节点（对应参数：icon：图标color：图标颜色group：策略组名称）
-//Group-Panel = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Panel/Group-Panel/Group-Panel.js,argument=icon=https://raw.githubusercontent.com/cjf935257177/ZIYE00/Orz-3/Color/YouTube.png&color=#86abee&group=𝐘𝐨𝐮𝐓𝐮𝐛𝐞
+//Group-Panel = type=generic,timeout=10,script-path=https://raw.githubusercontent.com/Rabbit-Spec/Surge/Master/Panel/Group-Panel/Group-Panel.js,argument=icon=https://raw.githubusercontent.com/cjf0423/ZIYE00/Orz-3/Color/YouTube.png&color=#86abee&group=𝐘𝐨𝐮𝐓𝐮𝐛𝐞
 
 
 
