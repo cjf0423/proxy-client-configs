@@ -1,0 +1,21 @@
+name: 定时任务
+desc: cjf0423 Task
+
+cron:
+  script:
+    - name: 阿里云盘签到
+      cron: '15 4,9 * * *'
+      timeout: 120
+
+    - name:  茅台自动预约
+      cron: '15,35 9 * * *'
+      timeout: 120
+ 
+script-providers:
+  阿里云盘签到:
+    url: https://raw.githubusercontent.com/lowking/Scripts/master/ali/aliYunPanCheckIn.js
+    interval: 86400
+
+  茅台自动预约:
+    url: https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/imaotai/imaotai.js
+    interval: 86400

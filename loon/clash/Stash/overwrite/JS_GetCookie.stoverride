@@ -1,0 +1,35 @@
+name: "CJF iOS Cookies Module"
+desc: "cjf0423 Cookie"
+
+http:
+  mitm:
+    - "auth.aliyundrive.com"
+    - "app.moutai519.com.cn"
+
+
+  script:
+    - match: ^https:\/\/auth.aliyundrive.com\/v2\/account\/token
+      name: 阿里云盘签到cookie
+      type: response
+      require-body: true
+      timeout: 30
+      
+    - match: https://app.moutai519.com.cn/xhr/front/user/info
+      name: 茅台自动预约获取cookie
+      type: response
+      require-body: true
+      timeout: 10
+
+
+
+script-providers:
+  阿里云盘签到cookie:
+    url: https://raw.githubusercontent.com/lowking/Scripts/master/ali/aliYunPanCheckIn.js
+    interval: 86400
+    
+  茅台自动预约获取cookie:
+    url: https://raw.githubusercontent.com/Yuheng0101/X/main/Tasks/imaotai/imaotai.js
+    interval: 86400
+
+
+

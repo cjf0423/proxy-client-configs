@@ -1,0 +1,50 @@
+name: "自用脚本 Module"
+desc: "cjf0423 Script"
+
+http:
+  force-http-engine:
+    - "boxjs.com:80"
+    - "boxjs.net:80"
+    - "*.boxjs.com:80"
+    - "*.boxjs.net:80"
+  mitm:
+    - "boxjs.com"
+    - "boxjs.net"
+    - "*.boxjs.com"
+    - "*.boxjs.net"
+    - "ios.chat.openai.com"
+    - "api.m.jd.com"
+
+  script:
+    - match: ^https?:\/\/(.+\.)?boxjs\.(com|net)
+      name: BoxJs
+      type: request
+      require-body: true
+      timeout: 120
+      
+    - match: ^https?:\/\/ios\.chat\.openai\.com\/backend-api\/(accounts\/check\/|models)
+      name: ChatGPT解锁Plus
+      type: response
+      require-body: true
+      timeout: 10
+
+    - match: ^https?://api\.m\.jd\.com/(client\.action|api)\?functionId=(wareBusiness|serverConfig|basicConfig|lite_wareBusiness|pingou_item)
+      name: 京东历史价格
+      type: response
+      require-body: true
+      timeout: 10
+
+script-providers:
+  BoxJs:
+    url: https://raw.githubusercontent.com/chavyleung/scripts/master/box/chavy.boxjs.js
+    interval: 86400
+    
+  ChatGPT解锁Plus:
+    url: https://raw.githubusercontent.com/yqc007/QuantumultX/master/ChatGPTPlusCrack.js
+    interval: 86400
+
+  京东历史价格:
+    url: https://raw.githubusercontent.com/jnlaoshu/MySelf/main/Script/JDPrice.js
+    interval: 3600
+
+

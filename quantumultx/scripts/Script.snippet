@@ -1,0 +1,126 @@
+# 自用脚本 @ cjf0423
+
+
+
+# A
+
+# B
+# BoxJs
+https?:\/\/boxjs\.(com|net) url script-analyze-echo-response https://raw.githubusercontent.com/chavyleung/scripts/master/box/chavy.boxjs.js
+
+# 哔哩哔哩自动换区
+^https:\/\/ap(p|i)\.bilibili\.com\/(pgc\/view\/(v\d\/)?app|x(\/v\d)?\/view\/video)\/(season|online)\?access_key url script-response-body https://raw.githubusercontent.com/NobyDa/Script/master/Surge/JS/Bili_Auto_Regions.js
+
+# 哔哩哔哩搜索指定地区的番剧
+^https:\/\/app\.bilibili\.com\/x\/v\d\/search(\/type)?\?.+?%20(%E6%B8%AF|%E5%8F%B0|%E4%B8%AD)& url script-request-header https://raw.githubusercontent.com/NobyDa/Script/master/Surge/JS/Bili_Auto_Regions.js
+
+# 百度网盘加速hh
+https:\/\/pan\.baidu\.com\/rest\/\d\.\d\/membership\/user url script-response-body https://raw.githubusercontent.com/NobyDa/Script/master/Surge/JS/BaiduCloud.js
+
+# C
+
+# D
+
+# E
+
+# F
+
+# G
+# GreasyFork油猴脚本转换器
+https:\/\/greasyfork\.org\/scripts\/.*\.user\.js url script-response-body https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/greasy-fork.js
+
+# (复写)部分raw.githubusercontent走cdn
+//^(http|https):\/\/raw\.githubusercontent\.com\/(DivineEngine|lhie1)\/(.+?)\/(master|main)\/(.+) url 302 https://cdn.jsdelivr.net/gh/$2/$3/$5
+
+# H
+
+# I
+
+# J
+# 如果京东入会开卡打开无网络，是因为比价主机名导致，可以关闭本条重写规则解决
+# 其他问题：暂时没有
+# 京东比价
+# 比价信息显示在商品下方
+^https?:\/\/api\.m\.jd\.com\/client\.action\?functionId=(wareBusiness|serverConfig|basicConfig) url script-response-body https://raw.githubusercontent.com/zwf234/rules/master/js/jd_price.js
+
+# 京东历史价格和返利信息(弹窗版)
+//^https?://api\.m\.jd\.com/client\.action\?functionId=(wareBusiness|serverConfig|basicConfig) url script-response-body https://raw.githubusercontent.com/Tartarus2014/Script/master/jd_price_lite.js
+
+# 京东登入辅助(用新版)
+//^https?:\/\/home\.m\.jd\.com\/userinfom\/QueryUserInfoM url script-response-body https://raw.githubusercontent.com/cjf935257177/QuantumultX/master/script/Scheduled%20Tasks/jd_login_help.js
+//^https?:\/\/plogin\.m\.jd\.com\/login\/login url script-response-body https://raw.githubusercontent.com/cjf935257177/QuantumultX/master/script/Scheduled%20Tasks/jd_login_help.js
+
+# 京东宠汪汪赛跑(失效)
+//^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/api\/user\/user\/detail\?openId= url script-request-header https://raw.githubusercontent.com/cjf935257177/Loon/master/jd_scripts/jd_joy_run.js
+//^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/api\/user\/addUser\?code= url script-response-body https://raw.githubusercontent.com/cjf935257177/Loon/master/jd_scripts/jd_joy_run.js
+
+# 京东宠汪汪强制为别人助力(失效)
+//^https:\/\/draw\.jdfcloud\.com\/\/common\/pet\/enterRoom\/h5\?invitePin=.*(&inviteSource=task_invite&shareSource=\w+&inviteTimeStamp=\d+&openId=\w+)?&reqSource=weapp|^https:\/\/draw\.jdfcloud\.com(\/mirror)?\/\/pet\/helpFriend\?friendPin url script-request-header https://raw.githubusercontent.com/cjf935257177/Loon/master/jd_scripts/jd_joy_help.js
+
+# 京东聚宝盆投狗粮辅助(失效)
+//^https:\/\/jdjoy\.jd\.com\/pet\/getPetTreasureBox|^https:\/\/draw\.jdfcloud\.com\/\/pet\/getPetTreasureBox url script-response-body https://raw.githubusercontent.com/cjf935257177/QuantumultX/master/script/jd_scripts/jd_petTreasureBox.js
+
+# K
+
+# L
+
+# N
+# 奈飞单集评分
+^https?://ios\.prod\.ftl\.netflix\.com/iosui/warmer/.+type=show-ath url script-response-body https://raw.githubusercontent.com/yichahucha/surge/master/nf_rating_season.js
+
+# M
+# 美图秀秀vip
+^https?:\/\/(h5|api)\.xiuxiu\.meitu\.com\/v\d\/(h\d\/vip|vip|user)\/ url script-response-body https://raw.githubusercontent.com/Moli-X/Resources/main/Script/MTxiuxiu/MeiTu.js
+
+# 美图秀秀粉钻
+^https:\/\/api\.xiuxiu\.meitu\.com\/v1 url script-response-body https://raw.githubusercontent.com/Moli-X/Resources/main/Script/MTxiuxiu/MTxiuxiu.js
+
+# O
+
+# P
+
+# Q
+
+# R
+
+# S
+# Sub-Store高级订阅管理工具
+^https?:\/\/sub\.store\/((download)|api\/(preview|sync|(utils\/node-info))) url script-analyze-echo-response https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-1.min.js
+^https?:\/\/sub\.store url script-analyze-echo-response https://github.com/sub-store-org/Sub-Store/releases/latest/download/sub-store-0.min.js
+
+# T
+# 淘宝比价
+# 历史价格在“保障”中显示，需要点击“保障”才能看到.
+^http://.+/amdc/mobileDispatch url script-request-body https://raw.githubusercontent.com/cjf0423/QuantumultX/refs/heads/master/script/Scheduled%20Tasks/jd_tb_price_main.js
+^https?://trade-acs\.m\.taobao\.com/gw/mtop\.taobao\.detail\.getdetail url script-response-body https://raw.githubusercontent.com/cjf0423/QuantumultX/refs/heads/master/script/Scheduled%20Tasks/jd_tb_price_main.js
+
+# U
+
+# V
+
+# W
+# wps会员
+^https?:\/\/account\.wps\.cn\/api\/users url script-response-body https://raw.githubusercontent.com/NobyDa/Script/master/Surge/JS/Wps.js
+
+# X
+
+# Y
+# 一甜相机解锁会员
+^https?:\/\/m2u-api\.getkwai\.com\/api-server\/api\/v2\/vip\/vipUserInfo url script-response-body https://raw.githubusercontent.com/yqc007/QuantumultX/master/1TianCamVipCrack.js
+
+# Z
+
+
+
+
+
+
+hostname = raw.githubusercontent.com, gist.githubusercontent.com, draw.jdfcloud.com, jdjoy.jd.com, api.m.jd.com, trade-acs.m.taobao.com, ap?.bilibili.com, account.wps.cn, plogin.m.jd.com, home.m.jd.com, greasyfork.org, openuserjs.org, ios.prod.ftl.netflix.com, pan.baidu.com, m2u-api.getkwai.com, sub.store, *.xiuxiu.meitu.com, api.xiuxiu.meitu.com  
+
+
+
+
+
+
+
+

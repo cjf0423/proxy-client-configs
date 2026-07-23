@@ -1,0 +1,174 @@
+#!name=CJF iOS Cookies Module
+#!desc=cjf0423 Cookie
+
+
+
+[Script]
+# A
+# 爱奇艺
+爱奇艺获取Cookie = type=http-request,pattern=^https:\/\/passport\.iqiyi\.com\/apis\/user\/info\.action,script-path=https://raw.githubusercontent.com/NobyDa/Script/master/iQIYI-DailyBonus/iQIYI.js,script-update-interval=0
+
+# 阿里云盘签到
+阿里云盘签到cookie = requires-body=1,type=http-response,pattern=https:\/\/auth.(aliyundrive|alipan).com\/v2\/account\/token,script-path=https://raw.githubusercontent.com/lowking/Scripts/master/ali/aliYunPanCheckIn.js,max-size=0,script-update-interval=0
+
+# B
+
+# C
+# 葱花视频(CenBoMin)
+葱花视频body获取 = type=http-request,pattern=https:\/\/app\.kxp\.com\/video\/v1\/video\/complete,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/CONGHUA/conghuabody.js,script-update-interval=0
+葱花视频body获取 = type=http-request,pattern=https:\/\/app\.kxp\.com\/video\/v1\/video\/share,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/CONGHUA/conghuabody.js,script-update-interval=0
+葱花视频body获取 = type=http-request,pattern=https:\/\/app\.kxp\.com\/task\/v1\/task_center\/data,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/CONGHUA/conghuabody.js,script-update-interval=0
+葱花视频body获取 = type=http-request,pattern=https:\/\/app\.kxp\.com\/task\/v1\/task_center\/red,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/CONGHUA/conghuabody.js,script-update-interval=0
+葱花视频body获取 = type=http-request,pattern=https:\/\/app\.kxp\.com\/task\/v1\/task_center\/share_video_reward,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/CONGHUA/conghuabody.js,script-update-interval=0
+葱花视频body获取 = type=http-request,pattern=https://app.kxp.com/withdrawal/v2/wechat/exchange,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/CONGHUA/conghuabody.js,script-update-interval=0
+葱花视频body获取 = type=http-request,pattern=https://task.youth.cn/count2/callback?,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/CONGHUA/conghuabody.js,script-update-interval=0
+
+# D
+# 多看点视频(CenBoMin)
+多看点视频(红包) = type=http-request,pattern=https://dkd-api.dysdk.com/video/red_countdown,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/DKDVIDEO/dkdvideo_cookie.js,script-update-interval=0
+多看点视频(视频) = type=http-request,pattern=https://dkd-api.dysdk.com/android_video/getaward,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/DKDVIDEO/dkdvideo_cookie.js,script-update-interval=0
+多看点视频(提现) = type=http-request,pattern=https://dkd-api.dysdk.com/money/withdraw_do?,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/DKDVIDEO/dkdvideo_cookie.js,script-update-interval=0
+多看点视频(转盘) = type=http-request,pattern=https://dkd-api.dysdk.com/lotto/index?,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/DKDVIDEO/dkdvideo_cookie.js,script-update-interval=0
+
+# 滴滴出行APP
+滴滴出行APPCookie = type=http-request,pattern=^https:\/\/as\.xiaojukeji\.com\/ep\/as\/toggles\?,script-path=https://raw.githubusercontent.com/zZPiglet/Task/master/DiDi/DiDi_new.js,script-update-interval=0
+# 滴滴出行小程序
+滴滴出行小程序Cookie = type=http-request,pattern=^https:\/\/common\.diditaxi\.com\.cn\/webapp\/config\/sidebar\?,script-path=https://raw.githubusercontent.com/zZPiglet/Task/master/DiDi/DiDi_new.js,script-update-interval=0
+
+# 滴滴果园
+滴滴果园获取token = type=http-request,pattern=^https:\/\/game\.xiaojukeji\.com\/api\/game\/plant\/watering,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/passerby-b/didi_fruit/main/dd_getToken.js,script-update-interval=0
+
+# E
+# 饿了么(leaf)
+饿了么(leaf) = type=http-request,pattern=https://h5.ele.me/restapi/biz.growth_finetune/v1/finetune/operate?,requires-body=0,script-path= https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/elm_v1.15.js,script-update-interval=0
+
+# F
+# 返利网
+返利网获取header = type=http-request,pattern=https:\/\/.+\.fanli\.com\/*,script-path=https://raw.githubusercontent.com/cjf0423/ZIYE00/ZIYE/Task/flw.js,script-update-interval=0
+
+# G
+# GLaDOS签到
+获取GLaDOS_Cookie = type=http-request,pattern=https:\/\/glados\.rocks\/api\/user\/checkin,script-path=https://raw.githubusercontent.com/evilbutcher/Quantumult_X/master/check_in/glados/glados.js,script-update-interval=0
+
+# 赶集直招
+赶集直招数据 = type=http-request,pattern=https://gjgrowthoper.58.com/user/userinfo,requires-body=0,script-path=https://raw.githubusercontent.com/leafTheFish/DeathNote/main/gjzz.js,script-update-interval=0
+
+# 狗狗大亨
+狗狗大亨获取数据 = type=http-request,pattern=http://api.doge.yingshe.com/api/doge,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/ggdh.js,script-update-interval=0
+
+# H
+
+# I
+# i茅台预约
+i茅台获取Token = type=http-request,pattern=^https:\/\/app\.moutai519\.com\.cn\/xhr\/front\/mall\/message\/unRead\/query,requires-body=0,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/i-maotai.js,script-update-interval=0
+
+# J
+# 获取京喜tokens
+京喜token = type=http-request,pattern=^https\:\/\/wq\.jd\.com\/cubeactive\/farm\/dotask,script-path=https://raw.githubusercontent.com/whyour/hundun/master/quanx/jx_tokens.js,script-update-interval=0
+京喜token = type=http-request,pattern=^https\:\/\/m\.jingxi\.com\/dreamfactory\/generator\/CollectCurrentElectricity,script-path=https://raw.githubusercontent.com/whyour/hundun/master/quanx/jx_tokens.js,script-update-interval=0
+京喜token = type=http-request,pattern=^https\:\/\/m\.jingxi\.com\/jxcfd\/consume\/CashOut,script-path=https://raw.githubusercontent.com/whyour/hundun/master/quanx/jx_tokens.js,script-update-interval=0
+
+# 获取京东Cookie
+获取京东Cookie = type=http-request,pattern=https:\/\/api\.m\.jd\.com\/client\.action.*functionId=signBean,script-path=https://raw.githubusercontent.com/NobyDa/Script/master/JD-DailyBonus/JD_DailyBonus.js,script-update-interval=0
+
+# 获取京东金融钢镚签到body
+获取京东金融钢镚签到body = type=http-request,pattern=^https:\/\/ms\.jr\.jd\.com\/gw\/generic\/hy\/h5\/m\/appSign\?,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/NobyDa/Script/master/JD-DailyBonus/JD_DailyBonus.js,script-update-interval=0
+
+# 京东到家果园
+京东到家果园获取cookie = type=http-request,pattern=daojia.jd.com/html/index.html,script-path=https://raw.githubusercontent.com/passerby-b/JDDJ/main/jddj_getck.js,script-update-interval=0
+
+# 京东金融
+京东金融领豆获取Cookie = type=http-request,pattern=^https?:\/\/ms\.jr\.jd\.com\/gw\/generic\/uc\/newna\/m\/userstat,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/dompling/Script/master/jd/jd_jr_cookie.js,script-update-interval=0
+
+# K
+# 快手 普通版
+快手获取数据1 = type=http-request,pattern=appsupport/yoda/biz/info,requires-body=0,script-path=https://raw.githubusercontent.com/leafTheFish/DeathNote/main/ks.js,script-update-interval=0
+快手获取数据2 = type=http-request,pattern=ksapp/client/package/renew,requires-body=0,script-path=https://raw.githubusercontent.com/leafTheFish/DeathNote/main/ks.js,script-update-interval=0
+
+# L
+
+# N
+
+# M
+美团(Leaf)获取数据 = type=http-request,pattern=http://gaea.meituan.com/mop/entry/forbidden/resource,requires-body=0,script-path=https://raw.githubusercontent.com/cjf0423/ZIYE00/leafTheFish/meituan.js,script-update-interval=0
+
+# O
+
+# P
+
+# Q
+# QQ音乐
+QQ音乐ck1 = type=http-request,pattern=https://c6.y.qq.com/shop/fcgi-bin/fcg_get_order?,requires-body=0,script-path=https://raw.githubusercontent.com/WowYiJiu/Personal/main/Script/qqMusic.js,script-update-interval=0
+QQ音乐ck2 = type=http-request,pattern=https://u6.y.qq.com/cgi-bin/musics.fcg?,requires-body=0,script-path=https://raw.githubusercontent.com/WowYiJiu/Personal/main/Script/qqMusic.js,script-update-interval=0
+
+# R
+# 燃旅视频
+燃旅视频Cookie = type=http-request,pattern=^https://ranlv.lvfacn.com/api.php/Common/pvlog,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/Ariszy/Private-Script/master/Scripts/ranlv.js,script-update-interval=0
+
+# S
+
+# 书旗小说获取header(ZIYE)
+用户名  视频任务 抽奖页面 极速版签到视频页   极速版视频任务 = type=http-request,pattern=https:\/\/ocean\.shuqireader\.com\/*,script-path=https://raw.githubusercontent.com/cjf935257177/ZIYE00/ZIYE/Task/shuqi.js,script-update-interval=0
+极速版书城 = type=http-request,pattern=http:\/\/activity-center-web\.shuqireader\.com\/*,script-path=https://raw.githubusercontent.com/cjf935257177/ZIYE00/ZIYE/Task/shuqi.js,script-update-interval=0
+
+
+# T
+# 腾讯自选股
+腾讯自选股1 = type=http-request,pattern=https://zqact.tenpay.com/cgi-bin/open_stockinfo.fcgi?,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/TXSTOCK/txs_cookie.js,script-update-interval=0
+腾讯自选股2 = type=http-request,pattern=https://wzq.tenpay.com/cgi-bin/activity_usercenter.fcgi?,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/TXSTOCK/txs_cookie.js,script-update-interval=0
+腾讯自选股3 = type=http-request,pattern=https://wzq.tenpay.com/resources/vtools,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/TXSTOCK/txs_cookie.js,script-update-interval=0
+腾讯自选股4 = type=http-request,pattern=https://wzq.tenpay.com/activity/page/welwareCenter/,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/TXSTOCK/txs_cookie.js,script-update-interval=0
+腾讯自选股5 = type=http-request,pattern=https://zqact.tenpay.com/cgi-bin/shop.fcgi?,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/TXSTOCK/txs_cookie.js,script-update-interval=0
+
+# 腾讯视频-福利中心
+腾讯视频-福利中心数据 = type=http-request,pattern=https://pbaccess.video.qq.com/activity/welfare_center/queryUserActivity,requires-body=0,script-path=https://raw.githubusercontent.com/leafTheFish/DeathNote/main/txspfl.js,script-update-interval=0
+
+# U
+
+# V
+
+# W
+
+# 吾爱破解
+吾爱获取Cookie = type=http-request,pattern=https:\/\/www\.52pojie\.cn\/home\.php\?,script-path=https://raw.githubusercontent.com/NobyDa/Script/master/52pojie-DailyBonus/52pojie.js,requires-body=0,script-update-interval=0
+
+# 文旅看点(CenBoMin)
+文旅看点获取body1 = type=http-request,pattern=http://app.zhongchuanjukan.com/jkd/mobiledomain/getDomain.action,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/WLAPP/wlappcookie.js,script-update-interval=0
+文旅看点获取body2 = type=http-request,pattern=http://app.zhongchuanjukan.com/jkd/login/userlogin.action,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/WLAPP/wlappcookie.js,script-update-interval=0
+文旅看点获取body3 = type=http-request,pattern=http://app.zhongchuanjukan.com/jkd/newmobile/artlist.action,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/WLAPP/wlappcookie.js,script-update-interval=0
+文旅看点获取body4 = type=http-request,pattern=http://wlapp.ccdy.cn/jkd/weixin20/station/stationarticle.action?,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/WLAPP/wlappcookie.js,script-update-interval=0
+文旅看点获取body5 = type=http-request,pattern=http://app.zhongchuanjukan.com/jkd/account/readAccount.action,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/WLAPP/wlappcookie.js,script-update-interval=0
+文旅看点获取body6 = type=http-request,pattern=http://app.zhongchuanjukan.com/jkd/newMobileMenu/infoMe.action,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/WLAPP/wlappcookie.js,script-update-interval=0
+文旅看点获取body7 = type=http-request,pattern=http://app.zhongchuanjukan.com/jkd/newmobile/artDetail.action,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/CenBoMin/GithubSync/main/WLAPP/wlappcookie.js,script-update-interval=0
+
+# X
+# 笑谱获取更新TOKEN(ZIYE)
+笑谱获取更新TOKEN = type=http-response,pattern=https:\/\/veishop\.iboxpay\.com\/nf_gateway\/nf-user-auth-web\/ignore_tk\/veishop\/v1\/*,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf935257177/ZIYE00/ZIYE/Task/iboxpay.js,script-update-interval=0
+
+# Y
+# 伊利乳品
+伊利乳品Cookie = type=http-request,pattern=https:\/\/club\.yili\.com\/MALLIFChe\/MCSWSIAPI\.asmx\/Call,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/id77/QuantumultX/master/task/yiLi.cookie.js,script-update-interval=0
+
+# Z
+# 追书神器
+追书神器数据 = type=http-request,pattern=https://goldcoinnew.zhuishushenqi.com/account/profile,requires-body=0,script-path=https://raw.githubusercontent.com/leafTheFish/DeathNote/main/zssq.js,script-update-interval=0
+
+# 臻浓星球
+臻浓星球获取ck = type=http-request,pattern=https://znapi.yili.com/api/user/getUser,script-path=https://raw.githubusercontent.com/cjf935257177/ZIYE00/ZIYE/Task/znxq.js,script-update-interval=0
+
+# 中青看点
+中青看点 = type=http-request,pattern=https:\/\/kd\.youth\.cn\/WebApi\/NewTaskIos\/getTaskList,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/youthjs/youth.js,script-update-interval=0
+中青看点 = type=http-request,pattern=https:\/\/ios\.baertt\.com\/v5\/article\/info\/get\.json,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/youthjs/youth.js,script-update-interval=0
+中青看点 = type=http-request,pattern=https:\/\/ios\.baertt\.com\/v5\/user\/stay\.json,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/youthjs/youth.js,script-update-interval=0
+中青看点 = type=http-request,pattern=https:\/\/ios\.baertt\.com\/v5\/\w+\/withdraw\d?\.json,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/youthjs/youth.js,script-update-interval=0
+中青看点浏览赚 = type=http-request,pattern=https:\/\/ios\.baertt\.com\/v5\/task\/browse_start\.json,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/youthjs/youth_gain.js,script-update-interval=0
+中青看点看看赚 = type=http-request,pattern=https:\/\/ios\.baertt\.com\/v5\/Nameless\/adlickstart\.json,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/QuantumultX/master/script/Scheduled%20Tasks/youthjs/youth_gain.js,script-update-interval=0
+
+
+
+
+[MITM]
+hostname = %APPEND% club.yili.com, passport.iqiyi.com, wq.jd.com, m.jingxi.com, wq.jd.com, qcjesnfs.bar, *.tenpay.com, api.m.jd.com, kd.youth.cn, ios.baertt.com, veishop.iboxpay.com, *.fanli.com, ranlv.lvfacn.com, dkd-api.dysdk.com, app.kxp.com, task.youth.cn, app.zhongchuanjukan.com, glados.rocks, activity-center-web.shuqireader.com, ocean.shuqireader.com, api.doge.yingshe.com, as.xiaojukeji.com, common.diditaxi.com.cn, *.lw0591.com, daojia.jd.com, ms.jr.jd.com, game.xiaojukeji.com, znapi.yili.com, ms.jr.jd.com, h5.ele.me, pbaccess.video.qq.com, goldcoinnew.zhuishushenqi.com, gjgrowthoper.58.com, api.kuaisho*.com, open.kuaisho*.com, www.52pojie.cn, *.meituan.com, auth.alipan.com, app.moutai519.com.cn, *.y.qq.com 
+
+
+ 
