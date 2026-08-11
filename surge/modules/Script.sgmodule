@@ -100,7 +100,7 @@ Sub-Store Simple = type=http-request,pattern=^https?:\/\/sub\.store,script-path=
 
 
 [MITM]
-hostname = %APPEND% ap?.bilibili.com, sub.store, ios.prod.ftl.netflix.com, mp.weixin.qq.com, greasyfork.org, api.m.jd.com, trade-acs.m.taobao.com, *.bili*.*, 124.239.240.*, 101.89.57.66, 218.94.210.66, 240e:b1:9801:206:11:0:0:*, pan.baidu.com, *.xiuxiu.meitu.com, api.xiuxiu.meitu.com, boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net  
+hostname = %APPEND% ap?.bilibili.com, sub.store, ios.prod.ftl.netflix.com, mp.weixin.qq.com, greasyfork.org, api.m.jd.com, trade-acs.m.taobao.com, *.bili*.*, 124.239.240.*, 101.89.57.66, 218.94.210.66, pan.baidu.com, *.xiuxiu.meitu.com, api.xiuxiu.meitu.com, boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net  
 
 
 
