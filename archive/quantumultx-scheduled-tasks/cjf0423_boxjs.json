@@ -145,7 +145,7 @@
   {
     "id": "bitfinex-lending",
     "name": "Bitfinex 自动放贷",
-    "keys": ["bfx_api_key", "bfx_api_secret", "bfx_symbol", "bfx_use_frr", "bfx_frr_offset_pct_day", "bfx_fixed_rate_pct_day", "bfx_period", "bfx_reserve_amount", "bfx_min_offer", "bfx_rate_change_threshold_pct_day", "bfx_amount_change_threshold", "bfx_min_annual_rate", "bfx_dry_run", "bfx_debug"],
+    "keys": ["bfx_api_key", "bfx_api_secret", "bfx_symbol", "bfx_use_frr", "bfx_frr_offset_pct_day", "bfx_fixed_rate_pct_day", "bfx_period", "bfx_reserve_amount", "bfx_min_offer", "bfx_rate_change_threshold_pct_day", "bfx_amount_change_threshold", "bfx_min_annual_rate", "bfx_transfer_small_uncommitted", "bfx_dca_enabled", "bfx_dca_symbol", "bfx_dry_run", "bfx_debug"],
     "descs_html": [
       "Bitfinex USD 自动放贷脚本，支持 FRR 浮动利率和固定利率模式"
     ],
@@ -233,6 +233,27 @@
       "type": "text",
       "placeholder": "(点击以展开说明)",
       "desc": "允许接受的最低年化收益，如设置为0.10即最低接受10%的年化收益率，当识别frr低于10%会自动跳过。默认0不限制"
+    }, {
+      "id": "bfx_transfer_small_uncommitted",
+      "name": "小额未挂出资金转现货",
+      "val": "false",
+      "type": "boolean",
+      "placeholder": "(点击以展开说明)",
+      "desc": "开启后，未挂出或不够起投的零钱低于金额变动阈值时，自动转至 Exchange 现货钱包"
+    }, {
+      "id": "bfx_dca_enabled",
+      "name": "转出现货自动定投",
+      "val": "false",
+      "type": "boolean",
+      "placeholder": "(点击以展开说明)",
+      "desc": "开启后，小额资金划转至现货后，自动按市价买入指定定投标的"
+    }, {
+      "id": "bfx_dca_symbol",
+      "name": "定投标的币种",
+      "val": "ETH",
+      "type": "text",
+      "placeholder": "(点击以展开说明)",
+      "desc": "定投买入的目标币种，例如 ETH、BTC、SOL"
     }, {
       "id": "bfx_dry_run",
       "name": "测试模式（不下单）",
