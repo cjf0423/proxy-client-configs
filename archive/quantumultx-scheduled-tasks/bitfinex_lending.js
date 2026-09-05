@@ -108,7 +108,7 @@ function validateConfig() {
 
 function httpGet(url) {
   return new Promise((resolve, reject) => {
-    $.get({ url }, (err, resp, body) => {
+    $.get({ url, timeout: 30 }, (err, resp, body) => {
       if (err) return reject(err);
       resolve({ resp, body });
     });
@@ -117,7 +117,7 @@ function httpGet(url) {
 
 function httpPost(url, headers, body) {
   return new Promise((resolve, reject) => {
-    $.post({ url, headers, body }, (err, resp, bodyText) => {
+    $.post({ url, headers, body, timeout: 30 }, (err, resp, bodyText) => {
       if (err) return reject(err);
       resolve({ resp, body: bodyText });
     });
