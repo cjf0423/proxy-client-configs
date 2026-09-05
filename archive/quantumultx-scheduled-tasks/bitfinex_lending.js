@@ -6,23 +6,29 @@
  * - 兼容 Quantumult X / Surge / Loon / Node.js
  * - 使用 Env 封装网络、持久化、通知、日志
  * - 重点修复：nonce 单调递增，避免 Bitfinex `nonce: small`
+ * - 安全加固（Fail-closed）：挂单/撤单/下单状态严格校验，撤单后确认清空
+ * - 小额划转现货：当未挂出或未达起投的零钱低于金额阈值时，自动转至 Exchange 钱包
+ * - 现货自动定投：小额划转成功后，可选使用划转金额自动市价定投指定代币（如 ETH）
  *
- * 推荐配置项（BoxJS / 持久化键）：
+ * 推荐配置项（BoxJS / 持久化键 / 环境变量）：
  * bfx_api_key
  * bfx_api_secret
- * bfx_symbol
- * bfx_use_frr
- * bfx_frr_offset_pct_day
- * bfx_fixed_rate_pct_day
- * bfx_period
- * bfx_reserve_amount
- * bfx_min_offer
- * bfx_max_offer
- * bfx_rate_change_threshold_pct_day
- * bfx_amount_change_threshold
- * bfx_min_annual_rate
- * bfx_dry_run
- * bfx_debug
+ * bfx_symbol                              (默认: fUSD)
+ * bfx_use_frr                             (默认: true)
+ * bfx_frr_offset_pct_day                  (默认: 0)
+ * bfx_fixed_rate_pct_day                  (默认: 0.018)
+ * bfx_period                              (默认: 2)
+ * bfx_reserve_amount                      (默认: 0)
+ * bfx_min_offer                           (默认: 150)
+ * bfx_max_offer                           (默认: 0)
+ * bfx_rate_change_threshold_pct_day       (默认: 0.002)
+ * bfx_amount_change_threshold             (默认: 1)
+ * bfx_min_annual_rate                     (默认: 0)
+ * bfx_transfer_small_uncommitted          (默认: false, 设置为 true 开启小额转现货)
+ * bfx_dca_enabled                         (默认: false, 设置为 true 开启转出资金自动定投)
+ * bfx_dca_symbol                          (默认: "", 如 ETH、BTC)
+ * bfx_dry_run                             (默认: false)
+ * bfx_debug                               (默认: false)
  */
 
 const $ = new Env("Bitfinex 自动放贷");
@@ -40,6 +46,9 @@ const MAX_OFFER = parseFloat($.getdata("bfx_max_offer") || "0");
 const RATE_CHANGE_THRESHOLD_PCT_DAY = parseFloat($.getdata("bfx_rate_change_threshold_pct_day") || "0.002");
 const AMOUNT_CHANGE_THRESHOLD = parseFloat($.getdata("bfx_amount_change_threshold") || "1");
 const MIN_ANNUAL_RATE = parseFloat($.getdata("bfx_min_annual_rate") || "0");
+const TRANSFER_SMALL_UNCOMMITTED_TO_EXCHANGE = ($.getdata("bfx_transfer_small_uncommitted") || "false").trim().toLowerCase() === "true";
+const DCA_ENABLED = ($.getdata("bfx_dca_enabled") || "false").trim().toLowerCase() === "true";
+const DCA_SYMBOL = ($.getdata("bfx_dca_symbol") || "").trim().toUpperCase();
 const DRY_RUN = ($.getdata("bfx_dry_run") || "false") === "true";
 const DEBUG = ($.getdata("bfx_debug") || "false") === "true";
 
@@ -130,13 +139,23 @@ async function authPost(path, bodyObj) {
     "User-Agent": "bitfinex-lending-universal/1.0"
   }, bodyJson);
 
+  const statusCode = resp && (resp.statusCode || resp.status);
+
   let data;
   try {
     data = JSON.parse(body);
   } catch (e) {
-    throw new Error("解析失败: " + String(body).slice(0, 120));
+    const rawSnippet = String(body || "").slice(0, 2048);
+    throw new Error("HTTP " + statusCode + " 解析失败: " + rawSnippet);
   }
-  debug("RESP " + path + " code=" + (resp && (resp.statusCode || resp.status)) + " body=" + safeJson(data).slice(0, 500));
+
+  debug("RESP " + path + " code=" + statusCode + " body=" + safeJson(data).slice(0, 500));
+
+  if (statusCode && (statusCode < 200 || statusCode >= 300)) {
+    const rawSnippet = String(body || "").slice(0, 2048);
+    throw new Error("HTTP " + statusCode + " 请求失败: " + rawSnippet);
+  }
+
   if (Array.isArray(data) && data[6] === "ERROR") throw new Error("API错误: " + data[7]);
   if (Array.isArray(data) && data[0] === "error") throw new Error("API错误: " + safeJson(data));
   return data;
@@ -172,6 +191,22 @@ function findFundingBalance(wallets, currency) {
     }
   }
   return NaN;
+}
+
+function findExplicitFundingAvailable(wallets, currency) {
+  if (!Array.isArray(wallets)) return null;
+  for (let i = 0; i < wallets.length; i++) {
+    const row = wallets[i];
+    if (!row || row.length < 5) continue;
+    if (row[0] === "funding" && row[1] === currency) {
+      if (row[4] !== null && row[4] !== undefined) {
+        const num = parseFloat(row[4]);
+        if (isFinite(num)) return num;
+      }
+      return null;
+    }
+  }
+  return null;
 }
 
 function summarizeCredits(credits) {
@@ -269,6 +304,194 @@ function needsReorder(offers, targetType, targetRate, targetAmount) {
     : { need: false, reason: "固定利率变动 " + fmtNum(changePctDay, 6) + "%/天，未超过阈值" };
 }
 
+// ─── 划转与定投 ─────────────────────────────────────────────────────────────
+
+async function transferFundingToExchange(currency, amount) {
+  const amt = roundDown(amount, 8);
+  if (amt <= 0) throw new Error("划转金额必须大于 0");
+
+  const path = "/v2/auth/w/transfer";
+  const body = {
+    from: "funding",
+    to: "exchange",
+    currency: currency,
+    amount: fmtNum(amt, 8)
+  };
+
+  const result = await authPost(path, body);
+
+  if (!Array.isArray(result) || result.length < 8 || result[6] !== "SUCCESS") {
+    throw new Error("划转未成功: " + safeJson(result));
+  }
+
+  const transfer = result[4];
+  if (!Array.isArray(transfer) || transfer.length < 8) {
+    throw new Error("划转响应格式异常: " + safeJson(result));
+  }
+  if (transfer[1] !== "funding" || transfer[2] !== "exchange") {
+    throw new Error("划转钱包方向异常: " + safeJson(result));
+  }
+  if (transfer[4] !== currency) {
+    throw new Error("划转币种异常: " + safeJson(result));
+  }
+  if (Math.abs(parseFloat(transfer[7]) - amt) > 1e-7) {
+    throw new Error("划转金额异常: " + safeJson(result));
+  }
+
+  log("[划转] 已从 funding 转入现货账户: " + fmtNum(amt, 8) + " " + currency);
+  return true;
+}
+
+async function dcaMarketBuy(targetCrypto, usdAmount) {
+  if (!DCA_ENABLED) return;
+  if (!targetCrypto) {
+    log("[定投] 已启用定投但未设置 bfx_dca_symbol，跳过买入");
+    return;
+  }
+  if (usdAmount <= 0) {
+    log("[定投] 划转金额 <= 0，跳过买入");
+    return;
+  }
+
+  const pair = "t" + targetCrypto + "USD";
+  log("[定投] 准备使用划转的 " + fmtNum(usdAmount, 4) + " USD 市价买入 " + targetCrypto + " (" + pair + ")");
+
+  if (DRY_RUN) {
+    log("[DRY RUN] 跳过实际定投买入");
+    return;
+  }
+
+  let askPrice = 0;
+  try {
+    const url = PUBLIC_BASE + "/v2/ticker/" + encodeURIComponent(pair);
+    const { resp, body } = await httpGet(url);
+    const ticker = JSON.parse(body);
+    if (Array.isArray(ticker) && ticker.length > 6) {
+      askPrice = parseFloat(ticker[2]);
+      if (!isFinite(askPrice) || askPrice <= 0) askPrice = parseFloat(ticker[6]);
+    }
+  } catch (e) {
+    log("[定投警告] 获取 " + pair + " 行情失败，跳过本次定投: " + e.message);
+    return;
+  }
+
+  if (!isFinite(askPrice) || askPrice <= 0) {
+    log("[定投警告] 价格异常 (" + askPrice + ")，跳过本次定投");
+    return;
+  }
+
+  // 预留 0.5% 滑点保护，向下截断至 8 位
+  const estCryptoAmount = (usdAmount * 0.995) / askPrice;
+  const cryptoAmount = roundDown(estCryptoAmount, 8);
+
+  if (cryptoAmount <= 0) {
+    log("[定投跳过] 计算出的买入数量过小 (" + cryptoAmount + ")，跳过本次定投");
+    return;
+  }
+
+  log("[定投] 当前市价 ~" + fmtNum(askPrice, 2) + " USD，计划买入 " + fmtNum(cryptoAmount, 8) + " " + targetCrypto + " (约 " + fmtNum(usdAmount * 0.995, 4) + " USD)");
+
+  const payload = {
+    type: "EXCHANGE MARKET",
+    symbol: pair,
+    amount: String(cryptoAmount)
+  };
+
+  try {
+    const result = await authPost("/v2/auth/w/order/submit", payload);
+    const notif = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : result;
+    if (Array.isArray(notif) && notif.length >= 7) {
+      const status = notif[6];
+      const text = notif[7] || "";
+      if (status === "SUCCESS") {
+        log("[定投成功] 已成功市价买入 " + fmtNum(cryptoAmount, 8) + " " + targetCrypto + " ✅");
+      } else {
+        log("[定投跳过] 下单被交易所拒绝 (" + status + ": " + text + ")，通常因金额太小低于最小交易量");
+      }
+    } else {
+      log("[定投] 下单响应: " + safeJson(result));
+    }
+  } catch (e) {
+    const errMsg = e.message || String(e);
+    if (/minimum size|not enough balance|amount/i.test(errMsg)) {
+      log("[定投跳过] 交易所拒绝下单（金额太小低于最小交易量）: " + errMsg.slice(0, 200));
+    } else {
+      log("[定投警告] 下单请求异常，跳过本次定投: " + errMsg.slice(0, 200));
+    }
+  }
+}
+
+async function maybeTransferSmallUncommittedToExchange(offers, currency, targetAmount) {
+  if (!TRANSFER_SMALL_UNCOMMITTED_TO_EXCHANGE) return null;
+  if (!offers || offers.length !== 1) return null;
+  if (AMOUNT_CHANGE_THRESHOLD <= 0) {
+    log("[划转] 金额阈值必须大于 0，跳过小额划转");
+    return false;
+  }
+  if (DRY_RUN) {
+    log("[DRY RUN] 跳过实际小额划转");
+    return null;
+  }
+
+  const existingAmount = Math.abs(parseFloat(offers[0][4]));
+  const amountDelta = targetAmount - existingAmount;
+  if (!(amountDelta > 0 && amountDelta < AMOUNT_CHANGE_THRESHOLD)) {
+    return null;
+  }
+
+  let wallets;
+  try {
+    wallets = await authPost("/v2/auth/r/wallets", {});
+  } catch (e) {
+    log("[错误] 获取可用 funding 余额失败，跳过小额划转: " + e.message);
+    return false;
+  }
+
+  const availableBalance = findExplicitFundingAvailable(wallets, currency);
+  if (availableBalance === null || !isFinite(availableBalance)) {
+    log("[错误] 未取得明确的 funding 可用余额，跳过小额划转");
+    return false;
+  }
+
+  const transferable = roundDown(Math.min(amountDelta, Math.max(0, availableBalance - RESERVE_AMOUNT)), 8);
+  if (transferable <= 0) {
+    log("[划转] 扣除预留后没有可划转的未挂出余额");
+    return null;
+  }
+
+  try {
+    await transferFundingToExchange(currency, transferable);
+    if (DCA_ENABLED && DCA_SYMBOL) {
+      try {
+        await dcaMarketBuy(DCA_SYMBOL, transferable);
+      } catch (dcaErr) {
+        log("[定投错误] 定投执行异常（不影响划转结果）: " + dcaErr.message);
+      }
+    }
+  } catch (e) {
+    log("[错误] 小额划转失败: " + e.message);
+    return false;
+  }
+  return true;
+}
+
+// ─── 撤单与下单 ─────────────────────────────────────────────────────────────
+
+async function cancelAllFundingOffers(symbol) {
+  const cancelCurrency = symbol.replace(/^f/, "");
+  const result = await authPost("/v2/auth/w/funding/offer/cancel/all", { currency: cancelCurrency });
+  const notif = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : result;
+  if (!Array.isArray(notif) || notif.length < 7) {
+    throw new Error("撤单响应格式异常，无法确认成功: " + safeJson(result));
+  }
+  const notifType = notif[1];
+  const notifStatus = notif[6];
+  if (notifType !== "foc_all-req" || notifStatus !== "SUCCESS") {
+    throw new Error("撤单 notification 未确认成功: type=" + notifType + " status=" + notifStatus + " raw=" + safeJson(result));
+  }
+  log("[撤单] 已取消所有未成交挂单（notification 确认 SUCCESS）");
+}
+
 async function step4Submit(target) {
   const currency = SYMBOL.replace(/^f/, "");
   const wallets = await authPost("/v2/auth/r/wallets", {});
@@ -284,10 +507,32 @@ async function step4Submit(target) {
     log("可贷金额 <= 0，跳过");
     return finishWithLog("跳过");
   }
+
+  // 金额不够最低挂单额（< MIN_OFFER）
   if (available < MIN_OFFER) {
     log("可贷金额低于最小挂单额 " + fmtNum(MIN_OFFER, 2) + "，跳过");
+
+    // 仅当金额严格小于金额阈值时划转；>= 阈值时保留在 funding 等待攒够放贷
+    if (TRANSFER_SMALL_UNCOMMITTED_TO_EXCHANGE && available > 0 && available < AMOUNT_CHANGE_THRESHOLD && !DRY_RUN) {
+      log("[划转] 余额 " + fmtNum(available, 2) + " < 阈值 " + fmtNum(AMOUNT_CHANGE_THRESHOLD, 2) + "，转入现货账户");
+      try {
+        await transferFundingToExchange(currency, available);
+        if (DCA_ENABLED && DCA_SYMBOL) {
+          try {
+            await dcaMarketBuy(DCA_SYMBOL, available);
+          } catch (e) {
+            log("[定投错误] 定投执行异常（不影响划转结果）: " + e.message);
+          }
+        }
+      } catch (e) {
+        log("[错误] 小额划转失败: " + e.message);
+      }
+    } else if (available >= AMOUNT_CHANGE_THRESHOLD) {
+      log("[等待] 余额 " + fmtNum(available, 2) + " ≥ 阈值 " + fmtNum(AMOUNT_CHANGE_THRESHOLD, 2) + "，保留在 funding 等待攒够放贷");
+    }
     return finishWithLog("跳过");
   }
+
   if (MIN_ANNUAL_RATE > 0 && target.annualRate < MIN_ANNUAL_RATE) {
     log("目标年化低于门槛，撤单后仍跳过下单");
     return finishWithLog("跳过");
@@ -310,16 +555,38 @@ async function step4Submit(target) {
 
   const result = await authPost("/v2/auth/w/funding/offer/submit", payload);
   debug("submit result=" + safeJson(result).slice(0, 500));
-  log("下单成功: " + target.rateDesc + " | 金额=" + payload.amount + " | 利率=" + payload.rate + " | 周期=" + PERIOD + "天");
+
+  const notif = Array.isArray(result) && Array.isArray(result[0]) ? result[0] : result;
+  if (!Array.isArray(notif) || notif.length < 7) {
+    throw new Error("下单响应格式异常，无法确认成功: " + safeJson(result));
+  }
+  const notifType = notif[1];
+  const notifStatus = notif[6];
+  if (notifType !== "fon-req" || notifStatus !== "SUCCESS") {
+    throw new Error("下单 notification 未确认成功: type=" + notifType + " status=" + notifStatus + " raw=" + safeJson(result));
+  }
+
+  log("下单成功: " + target.rateDesc + " | 金额=" + payload.amount + " | 利率=" + payload.rate + " | 周期=" + PERIOD + "天 (notification 确认 SUCCESS)");
   return finishWithLog("下单成功");
 }
+
+// ─── 主流程 ───────────────────────────────────────────────────────────────────
 
 async function main() {
   log(new Date().toLocaleString("zh-CN"));
   const cfgErr = validateConfig();
   if (cfgErr) return fail(cfgErr);
 
-  log("SYMBOL=" + SYMBOL + " PERIOD=" + PERIOD + "天 USE_FRR=" + USE_FRR + (DRY_RUN ? " DRY_RUN=true" : ""));
+  log(
+    "SYMBOL=" + SYMBOL +
+    " PERIOD=" + PERIOD + "天" +
+    " USE_FRR=" + USE_FRR +
+    " 预留=" + RESERVE_AMOUNT +
+    " 金额重挂阈值=" + AMOUNT_CHANGE_THRESHOLD +
+    " 小额转现货=" + TRANSFER_SMALL_UNCOMMITTED_TO_EXCHANGE +
+    " 定投=" + DCA_ENABLED + " (标的: " + (DCA_SYMBOL || "未设置") + ")" +
+    (DRY_RUN ? " DRY_RUN=true" : "")
+  );
 
   try {
     const { frr, raw } = await getCurrentFrr();
@@ -355,6 +622,7 @@ async function main() {
       log("已成交订单查询失败: " + (e && e.message ? e.message : String(e)));
     }
 
+    // Fail-closed: 获取 offers 失败直接终止，禁止伪造空数组继续
     const offers = await authPost("/v2/auth/r/funding/offers/" + SYMBOL, {});
     if (!Array.isArray(offers)) return fail("挂单返回异常: " + safeJson(offers).slice(0, 120));
 
@@ -370,17 +638,26 @@ async function main() {
 
     const judgment = needsReorder(offers, target.offerType, target.offerRate, totalAvail);
     log((judgment.need ? "需要重挂" : "保持现状") + "：" + judgment.reason);
+
+    // 无需重挂时：尝试将低于阈值未挂出的资金转至现货账户（并可选定投）
     if (!judgment.need) {
+      await maybeTransferSmallUncommittedToExchange(offers, currency, totalAvail);
       return finishWithLog("保持现状");
     }
 
-    const cancelCurrency = SYMBOL.replace(/^f/, "");
-    try {
-      await authPost("/v2/auth/w/funding/offer/cancel/all", { currency: cancelCurrency });
-      log("已请求撤单，等待5秒后重算余额...");
-      await $.wait(5000);
-    } catch (e) {
-      log("撤单警告: " + e.message);
+    // 撤单：Fail-closed 校验 notification
+    await cancelAllFundingOffers(SYMBOL);
+
+    log("已请求撤单，等待5秒后确认挂单清空...");
+    await $.wait(5000);
+
+    // Fail-closed: 撤单后重新查询挂单，若仍有未消失挂单，禁止提交替代单
+    const remainingOffers = await authPost("/v2/auth/r/funding/offers/" + SYMBOL, {});
+    if (!Array.isArray(remainingOffers)) {
+      return fail("撤单后无法确认挂单状态，停止执行");
+    }
+    if (remainingOffers.length > 0) {
+      return fail("撤单后仍有 " + remainingOffers.length + " 笔挂单未消失，停止执行");
     }
 
     await step4Submit(target);
