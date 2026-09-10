@@ -34,8 +34,9 @@ else {
 
     // ——— /account/verification ———
     if (endpoint === "/account/verification") {
-      // 主状态设为 active（和 bridge provider 一致）
-      obj.status = "active";
+      // not_started→需要KYC, completed→审核中, approved→准备中, active→复审中
+      // 试 "verified"
+      obj.status = "verified";
 
       if (obj.serviceProviders) {
         // 把所有 provider 都设为已通过（和 bridgeXYZ 一致）
@@ -79,7 +80,7 @@ else {
 
     // ——— /account/connect ———
     if (endpoint === "/account/connect") {
-      obj.verificationStatus = "active";
+      obj.verificationStatus = "verified";
       obj.isMigrationRequired = false;
       obj.isBanned = false;
       modified = true;
