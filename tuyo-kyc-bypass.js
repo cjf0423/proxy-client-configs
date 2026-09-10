@@ -1,14 +1,13 @@
 /*
- * Tuyo KYC Bypass v5
+ * Tuyo KYC Bypass v6
  * 
- * 关键发现：
- * - providers/bridge 返回 {"status":"active","eligible":false,"reason":"User is already verified"}
- * - providers/raincard 返回 {"status":"not_started","eligible":true}
- * - 主 verification 接口的 serviceProviders.bridgeXYZ 已通过 (verified:true,active:true)
- * - 但 raincards 未通过 (verified:false,active:false)
+ * 经 Hermes bytecode 逆向分析发现:
+ * - App 检查 isL1Verified, verificationGraceActive, shouldShowVerificationCard
+ * - hasLegacyVerification 也是一个条件
+ * - status 值 not_started/completed/approved/active/verified 都被映射到不同的审核页面
  * 
- * App 检查 raincards provider 的状态来决定是否显示 IBAN/转账页面。
- * 需要把 raincards 的状态伪装成和 bridge 一样的"已通过"。
+ * 新策略: 在所有相关响应中注入 grace/legacy 标志，
+ * 同时将 requirements 清空并设置所有可能的通过状态
  */
 
 const url = $request.url;
@@ -34,12 +33,16 @@ else {
 
     // ——— /account/verification ———
     if (endpoint === "/account/verification") {
-      // not_started→需要KYC, completed→审核中, approved→准备中, active→复审中
-      // 试 "verified"
-      obj.status = "verified";
-
+      // 设置所有可能的通过标识
+      obj.status = "approved";
+      obj.verificationGraceActive = true;
+      obj.isL1Verified = true;
+      obj.hasLegacyVerification = true;
+      obj.shouldShowVerificationCard = false;
+      obj.isVerified = true;
+      obj.kycCompleted = true;
+      
       if (obj.serviceProviders) {
-        // 把所有 provider 都设为已通过（和 bridgeXYZ 一致）
         for (var provider in obj.serviceProviders) {
           var p = obj.serviceProviders[provider];
           p.verified = true;
@@ -50,15 +53,12 @@ else {
           }
         }
       }
-      // 清空验证需求
       obj.requirements = [];
       obj.dataRemediations = [];
       modified = true;
     }
 
     // ——— /account/verification/providers/raincard ———
-    // 原始: {"status":"not_started","eligible":true,"isUSPerson":false,"verificationPendingStalled":false}
-    // 改为和 bridge 一致: {"status":"active","eligible":false,"reason":"User is already verified with the provider.","verificationPendingStalled":false}
     if (endpoint === "/account/verification/providers/raincard") {
       obj = {
         "status": "active",
@@ -71,18 +71,22 @@ else {
     }
 
     // ——— /account/verification/providers/bridge ———
-    // 这个已经是 active，但确保一下
     if (endpoint === "/account/verification/providers/bridge") {
       obj.status = "active";
+      obj.eligible = false;
+      obj.reason = "User is already verified with the provider.";
       obj.verificationPendingStalled = false;
       modified = true;
     }
 
     // ——— /account/connect ———
     if (endpoint === "/account/connect") {
-      obj.verificationStatus = "verified";
+      obj.verificationStatus = "approved";
       obj.isMigrationRequired = false;
       obj.isBanned = false;
+      obj.isL1Verified = true;
+      obj.verificationGraceActive = true;
+      obj.hasLegacyVerification = true;
       modified = true;
     }
 
@@ -93,6 +97,10 @@ else {
           obj.accounts[i].status = "active";
         }
       }
+      // 注入验证通过标识
+      obj.verificationGraceActive = true;
+      obj.isL1Verified = true;
+      obj.hasLegacyVerification = true;
       modified = true;
     }
 
