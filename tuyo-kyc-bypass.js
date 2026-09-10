@@ -1,8 +1,14 @@
 /*
- * Tuyo KYC Bypass v4
+ * Tuyo KYC Bypass v5
  * 
- * v3 已证明脚本在生效（从 "Action needed" 变成了 "Verifying"），
- * 说明 "completed" 不是最终态。尝试 "verified" 并补全所有子字段。
+ * 关键发现：
+ * - providers/bridge 返回 {"status":"active","eligible":false,"reason":"User is already verified"}
+ * - providers/raincard 返回 {"status":"not_started","eligible":true}
+ * - 主 verification 接口的 serviceProviders.bridgeXYZ 已通过 (verified:true,active:true)
+ * - 但 raincards 未通过 (verified:false,active:false)
+ * 
+ * App 检查 raincards provider 的状态来决定是否显示 IBAN/转账页面。
+ * 需要把 raincards 的状态伪装成和 bridge 一样的"已通过"。
  */
 
 const url = $request.url;
@@ -28,69 +34,65 @@ else {
 
     // ——— /account/verification ———
     if (endpoint === "/account/verification") {
-      // "not_started" → 需要KYC, "completed" → 审核中, 试 "approved"
-      obj.status = "approved";
-      
+      // 主状态设为 active（和 bridge provider 一致）
+      obj.status = "active";
+
       if (obj.serviceProviders) {
+        // 把所有 provider 都设为已通过（和 bridgeXYZ 一致）
         for (var provider in obj.serviceProviders) {
           var p = obj.serviceProviders[provider];
           p.verified = true;
           p.active = true;
           p.hasIssue = false;
-          // Stripe 专属字段
-          if (provider === "stripe" || p.hasCryptoCustomerId !== undefined) {
+          if (p.hasCryptoCustomerId !== undefined) {
             p.hasCryptoCustomerId = true;
-            p.instantDepositsEnabled = true;
           }
         }
       }
+      // 清空验证需求
       obj.requirements = [];
       obj.dataRemediations = [];
       modified = true;
     }
 
-    // ——— /account/verification/providers/* ———
-    if (endpoint.includes("/verification/providers/")) {
-      obj.verified = true;
-      obj.active = true;
-      obj.hasIssue = false;
-      if (obj.hasCryptoCustomerId !== undefined) {
-        obj.hasCryptoCustomerId = true;
-      }
-      if (obj.status) {
-        obj.status = "approved";
-      }
+    // ——— /account/verification/providers/raincard ———
+    // 原始: {"status":"not_started","eligible":true,"isUSPerson":false,"verificationPendingStalled":false}
+    // 改为和 bridge 一致: {"status":"active","eligible":false,"reason":"User is already verified with the provider.","verificationPendingStalled":false}
+    if (endpoint === "/account/verification/providers/raincard") {
+      obj = {
+        "status": "active",
+        "eligible": false,
+        "isUSPerson": false,
+        "reason": "User is already verified with the provider.",
+        "verificationPendingStalled": false
+      };
+      modified = true;
+    }
+
+    // ——— /account/verification/providers/bridge ———
+    // 这个已经是 active，但确保一下
+    if (endpoint === "/account/verification/providers/bridge") {
+      obj.status = "active";
+      obj.verificationPendingStalled = false;
       modified = true;
     }
 
     // ——— /account/connect ———
     if (endpoint === "/account/connect") {
-      obj.verificationStatus = "approved";
+      obj.verificationStatus = "active";
       obj.isMigrationRequired = false;
       obj.isBanned = false;
       modified = true;
     }
 
     // ——— /banking/overview ———
-    // 确保银行账户状态为 active
     if (endpoint === "/banking/overview") {
       if (obj.accounts && Array.isArray(obj.accounts)) {
         for (var i = 0; i < obj.accounts.length; i++) {
-          if (obj.accounts[i].status !== "active") {
-            obj.accounts[i].status = "active";
-            modified = true;
-          }
+          obj.accounts[i].status = "active";
         }
       }
-      // 如果有顶层 verification 相关字段
-      if (obj.verificationStatus) {
-        obj.verificationStatus = "approved";
-        modified = true;
-      }
-      if (obj.kycStatus) {
-        obj.kycStatus = "approved";
-        modified = true;
-      }
+      modified = true;
     }
 
     if (modified) {
