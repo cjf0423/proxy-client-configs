@@ -1,14 +1,8 @@
 /*
- * Tuyo KYC Bypass v3
+ * Tuyo KYC Bypass v4
  * 
- * 经过新旧版完整抓包对比确认：
- * 后端数据完全一致，KYC 限制 100% 是 App 前端 1.26.57 的客户端逻辑。
- * App 读取 /account/verification 的 status 字段决定是否显示验证页面。
- * 
- * 精准修改：
- * 1. /account/verification → status: "completed", 所有 provider verified: true
- * 2. /account/connect → verificationStatus: "completed"
- * 3. /account/verification/providers/* → 相应 provider 状态改为已验证
+ * v3 已证明脚本在生效（从 "Action needed" 变成了 "Verifying"），
+ * 说明 "completed" 不是最终态。尝试 "verified" 并补全所有子字段。
  */
 
 const url = $request.url;
@@ -22,14 +16,10 @@ if (typeof $response === "undefined") {
   delete headers["if-modified-since"];
   $done({ headers: headers });
 }
-// ===== 响应阶段：精准修改 KYC 字段 =====
+// ===== 响应阶段 =====
 else {
   let body = $response.body;
-
-  if (!body) {
-    $done({});
-    return;
-  }
+  if (!body) { $done({}); return; }
 
   try {
     let obj = JSON.parse(body);
@@ -37,75 +27,68 @@ else {
     let endpoint = url.replace("https://api.tuyo.com", "").split("?")[0];
 
     // ——— /account/verification ———
-    // 原始: {"status":"not_started","serviceProviders":{"bridgeXYZ":{"verified":true},"raincards":{"verified":false},"stripe":{"verified":false,...}},"requirements":[...],"dataRemediations":[]}
-    // 改为: status → completed, 所有 provider verified → true, 清空 requirements
     if (endpoint === "/account/verification") {
-      if (obj.status && obj.status !== "completed") {
-        obj.status = "completed";
-        modified = true;
-      }
-      // 把所有 service provider 设为已验证
+      // "not_started" → 需要KYC, "completed" → 审核中, 试 "approved"
+      obj.status = "approved";
+      
       if (obj.serviceProviders) {
         for (var provider in obj.serviceProviders) {
           var p = obj.serviceProviders[provider];
-          if (p.verified === false) {
-            p.verified = true;
-            modified = true;
-          }
-          if (p.active === false) {
-            p.active = true;
-            modified = true;
-          }
-          if (p.hasIssue === true) {
-            p.hasIssue = false;
-            modified = true;
+          p.verified = true;
+          p.active = true;
+          p.hasIssue = false;
+          // Stripe 专属字段
+          if (provider === "stripe" || p.hasCryptoCustomerId !== undefined) {
+            p.hasCryptoCustomerId = true;
+            p.instantDepositsEnabled = true;
           }
         }
       }
-      // 清空验证需求列表
-      if (obj.requirements && obj.requirements.length > 0) {
-        obj.requirements = [];
-        modified = true;
-      }
-      if (obj.dataRemediations && obj.dataRemediations.length > 0) {
-        obj.dataRemediations = [];
-        modified = true;
-      }
+      obj.requirements = [];
+      obj.dataRemediations = [];
+      modified = true;
     }
 
-    // ——— /account/verification/providers/raincard ———
+    // ——— /account/verification/providers/* ———
     if (endpoint.includes("/verification/providers/")) {
-      if (typeof obj.verified !== "undefined" && obj.verified === false) {
-        obj.verified = true;
-        modified = true;
+      obj.verified = true;
+      obj.active = true;
+      obj.hasIssue = false;
+      if (obj.hasCryptoCustomerId !== undefined) {
+        obj.hasCryptoCustomerId = true;
       }
-      if (typeof obj.active !== "undefined" && obj.active === false) {
-        obj.active = true;
-        modified = true;
+      if (obj.status) {
+        obj.status = "approved";
       }
-      if (typeof obj.status === "string") {
-        var blocked = ["not_started", "pending", "in_progress", "in_review", "submitted", "rejected", "failed", "expired", "required", "action_needed", "verifying"];
-        if (blocked.indexOf(obj.status.toLowerCase()) !== -1) {
-          obj.status = "completed";
-          modified = true;
-        }
-      }
+      modified = true;
     }
 
     // ——— /account/connect ———
-    // 原始: verificationStatus: "not_started"
-    // 改为: "completed"
     if (endpoint === "/account/connect") {
-      if (obj.verificationStatus && obj.verificationStatus !== "completed") {
-        obj.verificationStatus = "completed";
+      obj.verificationStatus = "approved";
+      obj.isMigrationRequired = false;
+      obj.isBanned = false;
+      modified = true;
+    }
+
+    // ——— /banking/overview ———
+    // 确保银行账户状态为 active
+    if (endpoint === "/banking/overview") {
+      if (obj.accounts && Array.isArray(obj.accounts)) {
+        for (var i = 0; i < obj.accounts.length; i++) {
+          if (obj.accounts[i].status !== "active") {
+            obj.accounts[i].status = "active";
+            modified = true;
+          }
+        }
+      }
+      // 如果有顶层 verification 相关字段
+      if (obj.verificationStatus) {
+        obj.verificationStatus = "approved";
         modified = true;
       }
-      if (obj.isMigrationRequired === true) {
-        obj.isMigrationRequired = false;
-        modified = true;
-      }
-      if (obj.isBanned === true) {
-        obj.isBanned = false;
+      if (obj.kycStatus) {
+        obj.kycStatus = "approved";
         modified = true;
       }
     }
@@ -114,9 +97,7 @@ else {
       body = JSON.stringify(obj);
       console.log("[Tuyo] ✅ Modified: " + endpoint);
     }
-  } catch (e) {
-    // Not JSON, pass through
-  }
+  } catch (e) {}
 
   $done({ body: body });
 }
