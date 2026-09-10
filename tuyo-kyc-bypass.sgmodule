@@ -1,13 +1,13 @@
 #!name=Tuyo KYC Bypass
-#!desc=v8 - 最小化测试: verification + raincard provider
+#!desc=v9 - verification + raincard + connect (不改 banking)
 #!category=Tuyo
 #!author=小H
-#!version=8
+#!version=9
 
 [Script]
-tuyo-req = type=http-request, pattern=^https://api\.tuyo\.com/account/verification, requires-body=0, max-size=0, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/tuyo-kyc-bypass.js, timeout=30
+tuyo-req = type=http-request, pattern=^https://api\.tuyo\.com/account/(verification|connect), requires-body=0, max-size=0, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/tuyo-kyc-bypass.js, timeout=30
 
-tuyo-res = type=http-response, pattern=^https://api\.tuyo\.com/account/verification, requires-body=1, max-size=131072, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/tuyo-kyc-bypass.js, timeout=30
+tuyo-res = type=http-response, pattern=^https://api\.tuyo\.com/account/(verification|connect), requires-body=1, max-size=131072, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/tuyo-kyc-bypass.js, timeout=30
 
 [MITM]
 hostname = %APPEND% api.tuyo.com

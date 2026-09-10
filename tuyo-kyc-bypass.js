@@ -1,9 +1,6 @@
 /*
- * Tuyo KYC Bypass v8 (finding minimum)
- * 
- * v6 能用，v7(仅 verificationGraceActive) 不行
- * 测试: verificationGraceActive + status + requirements清空 + providers改通过
- * 不改 /account/connect 和 /banking/overview
+ * Tuyo KYC Bypass v9
+ * v8(verification+raincard)不行 → 加回 /account/connect
  */
 
 const url = $request.url;
@@ -26,6 +23,11 @@ if (typeof $response === "undefined") {
     if (endpoint === "/account/verification") {
       obj.status = "approved";
       obj.verificationGraceActive = true;
+      obj.isL1Verified = true;
+      obj.hasLegacyVerification = true;
+      obj.shouldShowVerificationCard = false;
+      obj.isVerified = true;
+      obj.kycCompleted = true;
       obj.requirements = [];
       obj.dataRemediations = [];
       if (obj.serviceProviders) {
@@ -33,10 +35,12 @@ if (typeof $response === "undefined") {
           obj.serviceProviders[p].verified = true;
           obj.serviceProviders[p].active = true;
           obj.serviceProviders[p].hasIssue = false;
+          if (obj.serviceProviders[p].hasCryptoCustomerId !== undefined) {
+            obj.serviceProviders[p].hasCryptoCustomerId = true;
+          }
         }
       }
       body = JSON.stringify(obj);
-      console.log("[Tuyo] ✅ Modified verification");
     }
 
     if (endpoint === "/account/verification/providers/raincard") {
@@ -48,7 +52,24 @@ if (typeof $response === "undefined") {
         "verificationPendingStalled": false
       };
       body = JSON.stringify(obj);
-      console.log("[Tuyo] ✅ Modified raincard");
+    }
+
+    if (endpoint === "/account/verification/providers/bridge") {
+      obj.status = "active";
+      obj.eligible = false;
+      obj.reason = "User is already verified with the provider.";
+      obj.verificationPendingStalled = false;
+      body = JSON.stringify(obj);
+    }
+
+    if (endpoint === "/account/connect") {
+      obj.verificationStatus = "approved";
+      obj.isMigrationRequired = false;
+      obj.isBanned = false;
+      obj.isL1Verified = true;
+      obj.verificationGraceActive = true;
+      obj.hasLegacyVerification = true;
+      body = JSON.stringify(obj);
     }
   } catch (e) {}
 
