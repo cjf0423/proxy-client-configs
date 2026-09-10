@@ -1,5 +1,5 @@
 #!name=Tuyo KYC Bypass
-#!desc=Bypass KYC verification on Tuyo app to restore bank transfer & IBAN display
+#!desc=绕过 Tuyo 新版 KYC 验证，恢复银行转账及 IBAN 显示
 #!category=Tuyo
 #!author=cjf0423
 #!homepage=https://github.com/cjf0423/proxy-client-configs
