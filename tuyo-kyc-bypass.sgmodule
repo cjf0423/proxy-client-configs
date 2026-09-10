@@ -1,7 +1,8 @@
 #!name=Tuyo KYC Bypass
-#!desc=绕过 Tuyo 新版 KYC 验证，恢复转账/IBAN 功能
+#!desc=v6 - 绕过 Tuyo 新版 KYC 验证，恢复转账/IBAN 功能
 #!category=Tuyo
 #!author=小H
+#!version=6
 
 [Script]
 # 请求阶段：移除缓存头
