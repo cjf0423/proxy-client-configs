@@ -1,14 +1,14 @@
 /*
- * Tuyo KYC Bypass v7 (minimal)
+ * Tuyo KYC Bypass v8 (finding minimum)
  * 
- * 最小改动：仅在 /account/verification 响应中注入 verificationGraceActive: true
- * 让 App 认为处于宽限期，跳过 KYC 验证页面直接显示 IBAN
+ * v6 能用，v7(仅 verificationGraceActive) 不行
+ * 测试: verificationGraceActive + status + requirements清空 + providers改通过
+ * 不改 /account/connect 和 /banking/overview
  */
 
 const url = $request.url;
 
 if (typeof $response === "undefined") {
-  // 请求阶段：移除缓存头
   let headers = Object.assign({}, $request.headers);
   delete headers["If-None-Match"];
   delete headers["if-none-match"];
@@ -16,7 +16,6 @@ if (typeof $response === "undefined") {
   delete headers["if-modified-since"];
   $done({ headers: headers });
 } else {
-  // 响应阶段
   let body = $response.body;
   if (!body) { $done({}); return; }
 
@@ -25,9 +24,31 @@ if (typeof $response === "undefined") {
     let endpoint = url.replace("https://api.tuyo.com", "").split("?")[0];
 
     if (endpoint === "/account/verification") {
+      obj.status = "approved";
       obj.verificationGraceActive = true;
+      obj.requirements = [];
+      obj.dataRemediations = [];
+      if (obj.serviceProviders) {
+        for (var p in obj.serviceProviders) {
+          obj.serviceProviders[p].verified = true;
+          obj.serviceProviders[p].active = true;
+          obj.serviceProviders[p].hasIssue = false;
+        }
+      }
       body = JSON.stringify(obj);
-      console.log("[Tuyo] ✅ Injected verificationGraceActive");
+      console.log("[Tuyo] ✅ Modified verification");
+    }
+
+    if (endpoint === "/account/verification/providers/raincard") {
+      obj = {
+        "status": "active",
+        "eligible": false,
+        "isUSPerson": false,
+        "reason": "User is already verified with the provider.",
+        "verificationPendingStalled": false
+      };
+      body = JSON.stringify(obj);
+      console.log("[Tuyo] ✅ Modified raincard");
     }
   } catch (e) {}
 
