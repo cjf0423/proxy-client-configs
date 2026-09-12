@@ -1,0 +1,128 @@
+{
+  "id": "cjf0423.sur2b",
+  "name": "Sur2b - YouTube 字幕翻译 & 摘要",
+  "author": "小H (基于 Neurogram)",
+  "description": "YouTube 视频 AI 摘要 + 字幕翻译，支持 Google / DeepL 翻译，支持 OpenAI 兼容接口摘要",
+  "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/YouTube.png",
+  "apps": [
+    {
+      "id": "cjf0423.sur2b",
+      "name": "Sur2b 配置",
+      "descs_html": [
+        "<h2>📺 YouTube 字幕翻译 & AI 摘要</h2>",
+        "<p>字幕翻译默认开启（Google 翻译），AI 摘要需要配置 API Key</p>"
+      ],
+      "keys": [
+        "sur2b_video_translation",
+        "sur2b_translation_provider",
+        "sur2b_target_lang",
+        "sur2b_sub_line",
+        "sur2b_video_summary",
+        "sur2b_openai_url",
+        "sur2b_openai_key",
+        "sur2b_openai_model",
+        "sur2b_summary_prompt",
+        "sur2b_summary_max_min",
+        "sur2b_deepl_key",
+        "sur2b_deepl_url",
+        "sur2b_cache_hours"
+      ],
+      "settings": [
+        {
+          "id": "sur2b_video_translation",
+          "name": "启用字幕翻译",
+          "val": "true",
+          "type": "boolean",
+          "desc": "开启后自动翻译 YouTube 字幕"
+        },
+        {
+          "id": "sur2b_translation_provider",
+          "name": "翻译服务",
+          "val": "Google",
+          "type": "selects",
+          "items": ["Google", "DeepL"],
+          "desc": "选择翻译引擎"
+        },
+        {
+          "id": "sur2b_target_lang",
+          "name": "目标语言",
+          "val": "zh-CN",
+          "type": "selects",
+          "items": ["zh-CN", "zh-TW", "ja", "ko", "en", "fr", "de", "es"],
+          "desc": "翻译目标语言"
+        },
+        {
+          "id": "sur2b_sub_line",
+          "name": "字幕显示模式",
+          "val": "1",
+          "type": "selects",
+          "items": ["0", "1", "2"],
+          "desc": "0=仅译文 1=译文+原文 2=原文+译文"
+        },
+        {
+          "id": "sur2b_video_summary",
+          "name": "启用 AI 摘要",
+          "val": "false",
+          "type": "boolean",
+          "desc": "开启后自动生成视频摘要（需配置 API Key）"
+        },
+        {
+          "id": "sur2b_openai_url",
+          "name": "AI 接口地址",
+          "val": "https://api.openai.com/v1/chat/completions",
+          "type": "text",
+          "desc": "OpenAI 兼容接口地址，可填 CPA 网关地址"
+        },
+        {
+          "id": "sur2b_openai_key",
+          "name": "AI API Key",
+          "val": "",
+          "type": "text",
+          "desc": "OpenAI 或兼容接口的 API Key"
+        },
+        {
+          "id": "sur2b_openai_model",
+          "name": "AI 模型",
+          "val": "gpt-4o-mini",
+          "type": "text",
+          "desc": "用于摘要的模型名称"
+        },
+        {
+          "id": "sur2b_summary_prompt",
+          "name": "摘要提示词",
+          "val": "请用中文简要总结以下 YouTube 视频字幕内容，分条列出要点：\n\n{{subtitles}}",
+          "type": "textarea",
+          "desc": "AI 摘要的 Prompt，{{subtitles}} 会被替换为字幕内容"
+        },
+        {
+          "id": "sur2b_summary_max_min",
+          "name": "摘要最大时长(分钟)",
+          "val": "30",
+          "type": "text",
+          "desc": "超过该时长的视频不生成摘要"
+        },
+        {
+          "id": "sur2b_deepl_key",
+          "name": "DeepL API Key",
+          "val": "",
+          "type": "text",
+          "desc": "使用 DeepL 翻译时需要填写"
+        },
+        {
+          "id": "sur2b_deepl_url",
+          "name": "DeepL 接口地址",
+          "val": "https://api-free.deepl.com/v2/translate",
+          "type": "text",
+          "desc": "DeepL API 地址，免费版用 api-free"
+        },
+        {
+          "id": "sur2b_cache_hours",
+          "name": "缓存有效期(小时)",
+          "val": "24",
+          "type": "text",
+          "desc": "翻译和摘要缓存保留时间"
+        }
+      ]
+    }
+  ]
+}
