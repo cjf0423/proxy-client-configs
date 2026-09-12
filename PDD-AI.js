@@ -40,6 +40,8 @@ function cacheProducts() {
         var products = [];
         findProducts(data, products, 0);
 
+        $notification.post('🛒 缓存调试', '找到 ' + products.length + ' 个商品', 'body长度: ' + body.length);
+
         if (products.length > 0) {
             // 读取已有缓存
             var cache = {};
@@ -99,13 +101,19 @@ function analyzeProduct() {
         return;
     }
 
-    // 提取 goods_id
+    // 提取 goods_id (只匹配详情页商品)
     var goodsIdMatch = body.match(/refer_goods_id=(\d+)/);
     if (!goodsIdMatch) {
         $done({});
         return;
     }
     var goodsId = goodsIdMatch[1];
+    
+    // 只拦截进入具体商品详情页时的日志，避免首页误触发
+    if (body.indexOf('page_name=goods_detail') === -1 && body.indexOf('page_sn=10002') === -1) {
+        $done({});
+        return;
+    }
 
     // 去重 + 冷却
     var lastGoodsId = $persistentStore.read("pdd_ai_last_goods_id") || "";
