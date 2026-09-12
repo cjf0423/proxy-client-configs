@@ -63,9 +63,11 @@ function cacheProducts() {
             }
 
             $persistentStore.write(JSON.stringify(cache), "pdd_ai_goods_cache");
+            // 调试：缓存成功
+            $notification.post('🛒 缓存', '已缓存 ' + products.length + ' 个商品', '总计: ' + Object.keys(cache).length + ' 个');
         }
     } catch(e) {
-        // 静默
+        $notification.post('🛒 缓存', '解析失败', String(e));
     }
     $done({ body: body });
 }
@@ -123,13 +125,20 @@ function analyzeProduct() {
 
     var product = cache[goodsId];
     if (!product) {
-        // 缓存中没有，用 goods_id 直接让 AI 分析
+        // 缓存中没有，从埋点 body 中提取信息
+        var priceMatch = body.match(/goods_price=([0-9.]+)/);
+        var salesMatch = body.match(/sales_tip=([^&]+)/);
+        var imgMatch = body.match(/goods_img_url=([^&]+)/);
+        
+        var priceStr = priceMatch ? priceMatch[1] : '未知';
+        var salesStr = salesMatch ? decodeURIComponent(salesMatch[1]) : '';
+        
         product = {
             goods_id: goodsId,
-            name: '未知商品(ID:' + goodsId + ')',
-            price: '未知',
+            name: '拼多多商品',
+            price: priceStr,
             originalPrice: '未知',
-            salesTip: '',
+            salesTip: salesStr,
             mallName: '',
             discount: '',
             uncached: true
