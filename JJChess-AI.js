@@ -20,37 +20,57 @@ const apiKey = $persistentStore.read("jjchess_api_key") || "";
 const model = $persistentStore.read("jjchess_model") || "gemini-3.8-flash-high";
 const mySide = $persistentStore.read("jjchess_my_side") || "both";
 
-try {
-    if (!enabled || !apiUrl || !apiKey) {
-        $done({});
-    } else {
-        main();
-    }
-} catch (e) {
+if (!enabled) {
     $done({});
+} else if (!apiUrl || !apiKey) {
+    $notification.post('♟️ 象棋军师', '配置缺失', '请在 BoxJS 中配置 API 地址和 Key');
+    $done({});
+} else {
+    try {
+        main();
+    } catch (e) {
+        $notification.post('♟️ 象棋军师', '脚本异常', String(e));
+        $done({});
+    }
 }
 
 function main() {
-    const body = JSON.parse($request.body);
-    const order = body.order;
+    var bodyText = $request.body;
 
-    if (!order || !order.startsWith('position fen ')) {
+    if (!bodyText) {
+        $notification.post('♟️ 调试', '', '请求 body 为空');
         $done({});
         return;
     }
 
-    // 去重：相同局面不重复分析
-    const lastOrder = $persistentStore.read("jjchess_last_order");
+    var body;
+    try {
+        body = JSON.parse(bodyText);
+    } catch (e) {
+        $notification.post('♟️ 调试', '', 'body 解析失败: ' + bodyText.substring(0, 100));
+        $done({});
+        return;
+    }
+
+    var order = body.order;
+
+    if (!order || order.indexOf('position fen ') !== 0) {
+        $done({});
+        return;
+    }
+
+    // 去重
+    var lastOrder = $persistentStore.read("jjchess_last_order");
     if (order === lastOrder) {
         $done({});
         return;
     }
     $persistentStore.write(order, "jjchess_last_order");
 
-    // 解析 FEN 和走法
-    const afterFen = order.substring(13); // 去掉 "position fen "
-    const movesMatch = afterFen.match(/^(.+?)\s+moves\s+(.+)$/);
-    let baseFen, movesStr;
+    // 解析 FEN
+    var afterFen = order.substring(13);
+    var movesMatch = afterFen.match(/^(.+?)\s+moves\s+(.+)$/);
+    var baseFen, movesStr;
     if (movesMatch) {
         baseFen = movesMatch[1];
         movesStr = movesMatch[2];
@@ -59,42 +79,33 @@ function main() {
         movesStr = '';
     }
 
-    // 应用走法得到当前局面
-    const currentFen = movesStr ? applyMoves(baseFen, movesStr) : baseFen;
-    const turn = currentFen.split(' ')[1]; // 'w'=红方 'b'=黑方
+    var currentFen = movesStr ? applyMoves(baseFen, movesStr) : baseFen;
+    var turn = currentFen.split(' ')[1];
 
-    // 只分析用户的回合
     if (mySide === "red" && turn !== "w") { $done({}); return; }
     if (mySide === "black" && turn !== "b") { $done({}); return; }
 
-    // 生成棋盘文字图
-    const boardStr = buildBoard(currentFen.split(' ')[0]);
-    const turnStr = turn === 'w' ? '红方' : '黑方';
+    var boardStr = buildBoard(currentFen.split(' ')[0]);
+    var turnStr = turn === 'w' ? '红方' : '黑方';
 
-    // 立即放行请求，不阻塞游戏
-    $done({});
+    // 先通知：已捕获棋局
+    $notification.post('♟️ 象棋军师', turnStr + '走棋 - 分析中...', 'FEN: ' + currentFen.substring(0, 50));
 
-    // 构建 AI 提示词
-    const prompt = `你是中国象棋特级大师。请分析以下棋局，给出当前最佳走法。
+    var prompt = '你是中国象棋特级大师。请分析以下棋局，给出当前最佳走法。\n\n'
+        + '【当前棋盘】（上方为黑方，下方为红方）\n'
+        + '黑 ① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨\n'
+        + boardStr
+        + '红 九 八 七 六 五 四 三 二 一\n\n'
+        + '当前FEN: ' + currentFen + '\n'
+        + '轮到: ' + turnStr + '走棋\n\n'
+        + '棋子说明: K帅A仕B相R车N马C炮P兵=红方(大写), k将a士b象r車n馬c砲p卒=黑方(小写)\n\n'
+        + '【要求】\n'
+        + '1. 给出最佳走法，用标准中文记谱法（如"马二进三"、"炮八平五"）\n'
+        + '2. 一句话说明理由\n'
+        + '3. 如有余力，给出对手可能的应对\n'
+        + '格式:\n最佳: 马二进三（跳马出击，威胁中路）';
 
-【当前棋盘】（上方为黑方，下方为红方）
-黑 ① ② ③ ④ ⑤ ⑥ ⑦ ⑧ ⑨
-${boardStr}红 九 八 七 六 五 四 三 二 一
-
-当前FEN: ${currentFen}
-轮到: ${turnStr}走棋
-
-棋子说明: 帅仕相车马炮兵=红方, 将士象車馬砲卒=黑方
-
-【要求】
-1. 给出最佳走法，用标准记谱法（如"马二进三"、"炮八平五"）
-2. 一句话说明理由
-3. 给出对手可能的应对和你的后续1-2步
-格式示例:
-最佳: 马二进三（跳马出击，威胁中路）
-预测: 对方炮8平5，我方车一进一`;
-
-    // 调用 AI
+    // 发起 AI 请求，在回调里 $done
     $httpClient.post({
         url: apiUrl,
         headers: {
@@ -103,30 +114,39 @@ ${boardStr}红 九 八 七 六 五 四 三 二 一
         },
         body: JSON.stringify({
             model: model,
-            messages: [{ role: 'user', content: prompt }]
-        })
+            messages: [{ role: 'user', content: prompt }],
+            max_tokens: 500
+        }),
+        timeout: 55
     }, function(err, resp, data) {
+        if (err) {
+            $notification.post('♟️ 象棋军师', 'AI 请求失败', String(err));
+            $done({});
+            return;
+        }
         try {
-            if (!err && data) {
-                const result = JSON.parse(data);
-                if (result.choices && result.choices[0]) {
-                    const content = result.choices[0].message.content;
-                    $notification.post('♟️ 象棋军师', turnStr + '走棋', content);
-                }
+            var result = JSON.parse(data);
+            if (result.choices && result.choices[0]) {
+                var content = result.choices[0].message.content;
+                $notification.post('♟️ 象棋军师', turnStr + '走棋', content);
+            } else if (result.error) {
+                $notification.post('♟️ 象棋军师', 'AI 返回错误', result.error.message || JSON.stringify(result.error));
+            } else {
+                $notification.post('♟️ 象棋军师', '未知响应', data.substring(0, 200));
             }
         } catch (e) {
-            // 静默
+            $notification.post('♟️ 象棋军师', '解析失败', data ? data.substring(0, 200) : '空响应');
         }
+        $done({});
     });
 }
 
 // ============ 应用走法到FEN ============
 function applyMoves(fen, movesStr) {
-    const parts = fen.split(' ');
-    const rows = parts[0].split('/');
-    const board = [];
+    var parts = fen.split(' ');
+    var rows = parts[0].split('/');
+    var board = [];
 
-    // FEN → 10x9 棋盘数组
     for (var i = 0; i < rows.length; i++) {
         var row = [];
         for (var j = 0; j < rows[i].length; j++) {
@@ -140,7 +160,6 @@ function applyMoves(fen, movesStr) {
         board.push(row);
     }
 
-    // 逐步应用走法
     var moves = movesStr.trim().split(/\s+/);
     var turn = parts[1];
 
@@ -156,7 +175,6 @@ function applyMoves(fen, movesStr) {
         turn = (turn === 'w') ? 'b' : 'w';
     }
 
-    // 数组 → FEN
     var fenRows = [];
     for (var r = 0; r < board.length; r++) {
         var fenRow = '';
