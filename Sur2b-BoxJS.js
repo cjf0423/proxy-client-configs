@@ -75,7 +75,7 @@ cache = JSON.parse(cache);
     if (conf.videoSummary && subtitleData.maxT <= conf.summaryMaxMinutes * 60 * 1000) {
         summaryContent = await summarizer();
     }
-    if (conf.videoTranslation) {
+    if (conf.videoTranslation && subtitleData.maxT <= conf.translationMaxMinutes * 60 * 1000) {
         translatedBody = await translator();
     }
 
@@ -107,40 +107,11 @@ cache = JSON.parse(cache);
 
 })();
 
-function sendSummaryNotification(content) {
-    if (!content) return;
-    const lines = content.split('\n').filter(line => line.trim() !== '');
-    if (lines.length <= 3) {
-        $.msg('YouTube 视频摘要', '', content);
-        return;
-    }
-    
-    // 如果太长，分多条通知发送，确保显示完全
-    const batchSize = 3;
-    let title = '📺 YouTube 视频摘要 (1)';
-    let batch = [];
-    let count = 1;
-
-    for (let i = 0; i < lines.length; i++) {
-        batch.push(lines[i]);
-        if (batch.length === batchSize || i === lines.length - 1) {
-            if (count === 1) {
-                title = '📺 YouTube 视频摘要 (向上滑动查看更多)';
-            } else {
-                title = `📺 视频摘要 (接上文 ${count})`;
-            }
-            $.msg(title, '', batch.join('\n'));
-            batch = [];
-            count++;
-        }
-    }
-}
-
 // ============ AI 摘要 ============
 async function summarizer() {
 
     if (cache[videoID]?.[sourceLang]?.summary) {
-        sendSummaryNotification(cache[videoID][sourceLang].summary.content);
+        $.msg('YouTube 视频摘要', '', cache[videoID][sourceLang].summary.content);
         return;
     }
 
@@ -169,7 +140,7 @@ async function summarizer() {
         const resp = await sendRequest(options, 'post');
         if (resp.error) throw new Error(resp.error.message);
         const content = resp.choices[0].message.content;
-        sendSummaryNotification(content);
+        $.msg('YouTube 视频摘要', '', content);
         return content;
     } catch (err) {
         $.msg('YouTube 视频摘要', '摘要请求失败', String(err));
