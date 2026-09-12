@@ -70,40 +70,25 @@ cache = JSON.parse(cache);
         return;
     }
 
-    let summaryContent, translatedBody;
-
-    if (conf.videoSummary && subtitleData.maxT <= conf.summaryMaxMinutes * 60 * 1000) {
-        summaryContent = await summarizer();
-    }
+    // 先处理翻译（必须在 $done 之前完成，因为要修改 body）
     if (conf.videoTranslation) {
-        translatedBody = await translator();
+        await translator();
     }
 
-    if ((summaryContent || translatedBody) && videoID && sourceLang) {
+    // 立即返回字幕给 YouTube，不要等摘要
+    $.done({ body });
 
-        if (!cache[videoID]) cache[videoID] = {};
-        if (!cache[videoID][sourceLang]) cache[videoID][sourceLang] = {};
-
-        if (summaryContent) {
-            cache[videoID][sourceLang].summary = {
-                content: summaryContent,
-                timestamp: new Date().getTime()
-            };
-        }
-
-        if (translatedBody) {
-            if (!cache[videoID][sourceLang].translation) cache[videoID][sourceLang].translation = {};
-            cache[videoID][sourceLang].translation[conf.targetLanguage] = {
-                content: translatedBody,
-                timestamp: new Date().getTime()
-            };
+    // 摘要在 $done 之后异步执行，不阻塞字幕加载
+    if (conf.videoSummary && subtitleData.maxT <= conf.summaryMaxMinutes * 60 * 1000) {
+        try {
+            await summarizer();
+        } catch (e) {
+            // 摘要失败不影响字幕
         }
     }
 
     cleanCache();
     $.setdata(JSON.stringify(cache), 'Sur2bCache');
-
-    $.done({ body });
 
 })();
 
@@ -192,6 +177,12 @@ async function summarizer() {
             $.msg('YouTube 视频摘要', '点击查看完整摘要 👆', content.substring(0, 80) + '...', { url: pageUrl });
         } catch (e) {
             $.msg('YouTube 视频摘要', '', content);
+        }
+        // 写入缓存
+        if (videoID && sourceLang) {
+            if (!cache[videoID]) cache[videoID] = {};
+            if (!cache[videoID][sourceLang]) cache[videoID][sourceLang] = {};
+            cache[videoID][sourceLang].summary = { content: content, timestamp: Date.now() };
         }
         return content;
     } catch (err) {
