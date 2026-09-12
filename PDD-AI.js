@@ -166,9 +166,7 @@ function analyzeProduct() {
     // 通知正在分析
     $notification.post('🛒 ' + titleName, subtitle, '正在 AI 分析...');
 
-    // 放行请求后异步调 AI
-    $done({});
-
+    // t.gif 只是埋点，延迟放行无影响，等 AI 回完再 $done
     $httpClient.post({
         url: apiUrl,
         headers: {
@@ -185,6 +183,7 @@ function analyzeProduct() {
     }, function(err, resp, respData) {
         if (err) {
             $notification.post('🛒 购物助手', 'AI 请求失败', String(err));
+            $done({});
             return;
         }
         try {
@@ -198,6 +197,7 @@ function analyzeProduct() {
         } catch(e) {
             $notification.post('🛒 购物助手', '解析失败', respData ? respData.substring(0, 200) : '空');
         }
+        $done({});
     });
 }
 
