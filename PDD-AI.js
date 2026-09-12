@@ -123,22 +123,38 @@ function analyzeProduct() {
 
     var product = cache[goodsId];
     if (!product) {
-        // 缓存中没有，可能是从搜索/其他入口进来的
-        $notification.post('🛒 购物助手', '商品ID: ' + goodsId, '未从推荐流缓存到该商品信息');
-        $done({});
-        return;
+        // 缓存中没有，用 goods_id 直接让 AI 分析
+        product = {
+            goods_id: goodsId,
+            name: '未知商品(ID:' + goodsId + ')',
+            price: '未知',
+            originalPrice: '未知',
+            salesTip: '',
+            mallName: '',
+            discount: '',
+            uncached: true
+        };
     }
 
     $persistentStore.write(goodsId, "pdd_ai_last_goods_id");
     $persistentStore.write(String(now), "pdd_ai_last_time");
 
     // 构建 AI prompt
-    var info = '商品名: ' + product.name + '\n'
-        + '拼团价: ¥' + product.price + '\n'
-        + '原价: ¥' + product.originalPrice + '\n';
-    if (product.discount) info += '折扣: ' + product.discount + '\n';
-    if (product.salesTip) info += '销量: ' + product.salesTip + '\n';
-    if (product.mallName) info += '店铺: ' + product.mallName + '\n';
+    var info = '';
+    if (product.uncached) {
+        info = '拼多多商品ID: ' + product.goods_id + '\n'
+            + '（该商品信息未缓存，请根据商品ID和你的知识分析）\n';
+    } else {
+        info = '商品名: ' + product.name + '\n'
+            + '拼团价: ¥' + product.price + '\n'
+            + '原价: ¥' + product.originalPrice + '\n';
+        if (product.discount) info += '折扣: ' + product.discount + '\n';
+        if (product.salesTip) info += '销量: ' + product.salesTip + '\n';
+        if (product.mallName) info += '店铺: ' + product.mallName + '\n';
+    }
+
+    var titleName = product.uncached ? '商品分析中' : product.name.substring(0, 20);
+    var subtitle = product.uncached ? 'ID: ' + product.goods_id : '¥' + product.price + ' | 原价¥' + product.originalPrice;
 
     var prompt = '你是一个精明的购物顾问。请分析以下拼多多商品，给出购买建议。\n\n'
         + '【商品信息】\n' + info + '\n'
@@ -148,9 +164,9 @@ function analyzeProduct() {
         + '3. ✅ 购买建议：一句话总结。';
 
     // 通知正在分析
-    $notification.post('🛒 ' + product.name.substring(0, 20), '¥' + product.price + ' | 原价¥' + product.originalPrice, '正在 AI 分析...');
+    $notification.post('🛒 ' + titleName, subtitle, '正在 AI 分析...');
 
-    // 调用 AI（放行请求后异步）
+    // 放行请求后异步调 AI
     $done({});
 
     $httpClient.post({
@@ -175,7 +191,7 @@ function analyzeProduct() {
             var result = JSON.parse(respData);
             if (result.choices && result.choices[0]) {
                 var content = result.choices[0].message.content;
-                $notification.post('🛒 ' + product.name.substring(0, 20), '¥' + product.price + ' | 原价¥' + product.originalPrice, content);
+                $notification.post('🛒 ' + titleName, subtitle, content);
             } else if (result.error) {
                 $notification.post('🛒 购物助手', '错误', result.error.message || JSON.stringify(result.error));
             }
