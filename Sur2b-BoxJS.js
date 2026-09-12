@@ -75,7 +75,7 @@ cache = JSON.parse(cache);
     if (conf.videoSummary && subtitleData.maxT <= conf.summaryMaxMinutes * 60 * 1000) {
         summaryContent = await summarizer();
     }
-    if (conf.videoTranslation && subtitleData.maxT <= conf.translationMaxMinutes * 60 * 1000) {
+    if (conf.videoTranslation) {
         translatedBody = await translator();
     }
 
@@ -107,11 +107,36 @@ cache = JSON.parse(cache);
 
 })();
 
+// ============ 生成摘要 HTML 页面 ============
+function buildSummaryHTML(content, videoID) {
+    const ytLink = videoID ? `https://www.youtube.com/watch?v=${videoID}` : '';
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>YouTube 视频摘要</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,system-ui;background:#1a1a2e;color:#e0e0e0;padding:20px;line-height:1.8}
+.card{background:#16213e;border-radius:16px;padding:24px;margin:10px auto;max-width:600px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
+h1{font-size:20px;color:#e94560;margin-bottom:16px;text-align:center}
+.content{font-size:15px;white-space:pre-wrap;word-wrap:break-word}
+.back{display:block;text-align:center;margin-top:20px;color:#0f3460;background:#e94560;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:16px}
+.time{text-align:center;color:#888;font-size:12px;margin-top:12px}
+</style></head><body>
+<div class="card">
+<h1>📺 YouTube 视频摘要</h1>
+<div class="content">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+<div class="time">${new Date().toLocaleString('zh-CN')}</div>
+${ytLink ? `<a class="back" href="${ytLink}">返回 YouTube</a>` : ''}
+</div></body></html>`;
+    return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+}
+
 // ============ AI 摘要 ============
 async function summarizer() {
 
     if (cache[videoID]?.[sourceLang]?.summary) {
-        $.msg('YouTube 视频摘要', '', cache[videoID][sourceLang].summary.content);
+        const cachedContent = cache[videoID][sourceLang].summary.content;
+        const pageUrl = buildSummaryHTML(cachedContent, videoID);
+        $.msg('YouTube 视频摘要', '点击查看完整摘要 👆', cachedContent.substring(0, 80) + '...', { url: pageUrl });
         return;
     }
 
@@ -140,7 +165,8 @@ async function summarizer() {
         const resp = await sendRequest(options, 'post');
         if (resp.error) throw new Error(resp.error.message);
         const content = resp.choices[0].message.content;
-        $.msg('YouTube 视频摘要', '', content);
+        const pageUrl = buildSummaryHTML(content, videoID);
+        $.msg('YouTube 视频摘要', '点击查看完整摘要 👆', content.substring(0, 80) + '...', { url: pageUrl });
         return content;
     } catch (err) {
         $.msg('YouTube 视频摘要', '摘要请求失败', String(err));
@@ -407,9 +433,9 @@ function Env(name) {
         if (this.isQuanX) return $prefs.setValueForKey(val, key);
     };
 
-    this.msg = (title, subtitle, body) => {
-        if (this.isSurge || this.isLoon) $notification.post(title, subtitle, body);
-        if (this.isQuanX) $notify(title, subtitle, body);
+    this.msg = (title, subtitle, body, opts = {}) => {
+        if (this.isSurge || this.isLoon) $notification.post(title, subtitle, body, opts);
+        if (this.isQuanX) $notify(title, subtitle, body, opts);
     };
 
     this.done = (val = {}) => {
