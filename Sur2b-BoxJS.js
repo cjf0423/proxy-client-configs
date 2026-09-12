@@ -107,27 +107,45 @@ cache = JSON.parse(cache);
 
 })();
 
-// ============ 生成摘要 HTML 页面 ============
-function buildSummaryHTML(content, videoID) {
-    const ytLink = videoID ? `https://www.youtube.com/watch?v=${videoID}` : '';
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>YouTube 视频摘要</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,system-ui;background:#1a1a2e;color:#e0e0e0;padding:20px;line-height:1.8}
-.card{background:#16213e;border-radius:16px;padding:24px;margin:10px auto;max-width:600px;box-shadow:0 4px 20px rgba(0,0,0,0.3)}
-h1{font-size:20px;color:#e94560;margin-bottom:16px;text-align:center}
-.content{font-size:15px;white-space:pre-wrap;word-wrap:break-word}
-.back{display:block;text-align:center;margin-top:20px;color:#0f3460;background:#e94560;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:bold;font-size:16px}
-.time{text-align:center;color:#888;font-size:12px;margin-top:12px}
-</style></head><body>
-<div class="card">
-<h1>📺 YouTube 视频摘要</h1>
-<div class="content">${content.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-<div class="time">${new Date().toLocaleString('zh-CN')}</div>
-${ytLink ? `<a class="back" href="${ytLink}">返回 YouTube</a>` : ''}
-</div></body></html>`;
-    return 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+// ============ 生成摘要页面 (Telegraph) ============
+async function createSummaryPage(content, videoID) {
+    // 自动创建 Telegraph 账号（首次）
+    let token = $.getdata('sur2b_telegraph_token');
+    if (!token) {
+        const acc = await sendRequest({
+            url: 'https://api.telegra.ph/createAccount?short_name=Sur2b&author_name=YouTube%E6%91%98%E8%A6%81'
+        });
+        if (!acc.ok) throw new Error('Telegraph 账号创建失败');
+        token = acc.result.access_token;
+        $.setdata(token, 'sur2b_telegraph_token');
+    }
+
+    // 构建内容节点
+    const nodes = [];
+    const lines = content.split('\n');
+    for (const line of lines) {
+        if (line.trim()) {
+            nodes.push({ tag: 'p', children: [line] });
+        }
+    }
+    if (videoID) {
+        nodes.push({ tag: 'p', children: [{ tag: 'a', attrs: { href: `https://www.youtube.com/watch?v=${videoID}` }, children: ['🔗 返回 YouTube 观看'] }] });
+    }
+
+    // 创建页面
+    const page = await sendRequest({
+        url: 'https://api.telegra.ph/createPage',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            access_token: token,
+            title: 'YouTube 视频摘要',
+            content: nodes,
+            return_content: false
+        })
+    }, 'post');
+
+    if (!page.ok) throw new Error('Telegraph 页面创建失败');
+    return page.result.url;
 }
 
 // ============ AI 摘要 ============
@@ -135,8 +153,12 @@ async function summarizer() {
 
     if (cache[videoID]?.[sourceLang]?.summary) {
         const cachedContent = cache[videoID][sourceLang].summary.content;
-        const pageUrl = buildSummaryHTML(cachedContent, videoID);
-        $.msg('YouTube 视频摘要', '点击查看完整摘要 👆', cachedContent.substring(0, 80) + '...', { url: pageUrl });
+        try {
+            const pageUrl = await createSummaryPage(cachedContent, videoID);
+            $.msg('YouTube 视频摘要', '点击查看完整摘要 👆', cachedContent.substring(0, 80) + '...', { url: pageUrl });
+        } catch (e) {
+            $.msg('YouTube 视频摘要', '', cachedContent);
+        }
         return;
     }
 
@@ -165,8 +187,12 @@ async function summarizer() {
         const resp = await sendRequest(options, 'post');
         if (resp.error) throw new Error(resp.error.message);
         const content = resp.choices[0].message.content;
-        const pageUrl = buildSummaryHTML(content, videoID);
-        $.msg('YouTube 视频摘要', '点击查看完整摘要 👆', content.substring(0, 80) + '...', { url: pageUrl });
+        try {
+            const pageUrl = await createSummaryPage(content, videoID);
+            $.msg('YouTube 视频摘要', '点击查看完整摘要 👆', content.substring(0, 80) + '...', { url: pageUrl });
+        } catch (e) {
+            $.msg('YouTube 视频摘要', '', content);
+        }
         return content;
     } catch (err) {
         $.msg('YouTube 视频摘要', '摘要请求失败', String(err));
