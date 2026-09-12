@@ -1,0 +1,11 @@
+#!name=拼多多 AI 购物助手
+#!desc=浏览商品时 AI 自动分析价格、风险、是否值得买
+#!category=Shopping
+#!author=小H
+#!version=1.0
+
+[Script]
+PDD-AI = type=http-response, pattern=https:\/\/api\.pinduoduo\.com\/api\/alexa\/(cells\/hub|homepage\/hub), requires-body=1, max-size=0, timeout=60, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/PDD-AI.js
+
+[MITM]
+hostname = %APPEND% api.pinduoduo.com

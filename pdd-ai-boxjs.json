@@ -1,0 +1,61 @@
+{
+  "id": "cjf0423.pddai",
+  "name": "拼多多 AI 购物助手",
+  "author": "小H",
+  "description": "拦截拼多多商品数据，AI 分析价格、风险、是否值得买",
+  "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Pinduoduo.png",
+  "apps": [
+    {
+      "id": "cjf0423.pddai",
+      "name": "购物助手配置",
+      "descs_html": [
+        "<h2>🛒 拼多多 AI 购物助手</h2>",
+        "<p>浏览拼多多商品时自动分析价格和风险</p>"
+      ],
+      "keys": [
+        "pdd_ai_enabled",
+        "pdd_ai_api_url",
+        "pdd_ai_api_key",
+        "pdd_ai_model",
+        "pdd_ai_cooldown"
+      ],
+      "settings": [
+        {
+          "id": "pdd_ai_enabled",
+          "name": "启用助手",
+          "val": "true",
+          "type": "boolean",
+          "desc": "开启后浏览商品自动分析"
+        },
+        {
+          "id": "pdd_ai_api_url",
+          "name": "AI 接口地址",
+          "val": "",
+          "type": "text",
+          "desc": "OpenAI 兼容接口（完整路径含 /v1/chat/completions）"
+        },
+        {
+          "id": "pdd_ai_api_key",
+          "name": "API Key",
+          "val": "",
+          "type": "text",
+          "desc": "AI 接口的 API Key"
+        },
+        {
+          "id": "pdd_ai_model",
+          "name": "模型",
+          "val": "gemini-3.8-flash-high",
+          "type": "text",
+          "desc": "推荐 gemini-3.8-flash-high"
+        },
+        {
+          "id": "pdd_ai_cooldown",
+          "name": "冷却时间（秒）",
+          "val": "30",
+          "type": "text",
+          "desc": "两次分析的最小间隔，避免刷屏（默认30秒）"
+        }
+      ]
+    }
+  ]
+}
