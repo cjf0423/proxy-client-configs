@@ -1,0 +1,11 @@
+#!name=JJ象棋 AI 军师
+#!desc=拦截棋局数据，AI 分析最佳走法并通知
+#!category=Game
+#!author=小H
+#!version=1.0
+
+[Script]
+JJChessAI = type=http-request, pattern=https:\/\/arena\.srv\.jj\.cn\/api\/v2\/chess\/check_state, requires-body=1, max-size=0, timeout=60, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/JJChess-AI.js
+
+[MITM]
+hostname = %APPEND% arena.srv.jj.cn

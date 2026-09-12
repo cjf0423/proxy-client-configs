@@ -1,0 +1,62 @@
+{
+  "id": "cjf0423.jjchess",
+  "name": "JJ象棋 AI 军师",
+  "author": "小H",
+  "description": "拦截 JJ象棋棋局数据，AI 分析最佳走法并通知提示",
+  "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Game.png",
+  "apps": [
+    {
+      "id": "cjf0423.jjchess",
+      "name": "象棋军师配置",
+      "descs_html": [
+        "<h2>♟️ JJ象棋 AI 军师</h2>",
+        "<p>拦截棋局 FEN 数据，调用大模型分析最佳走法</p>"
+      ],
+      "keys": [
+        "jjchess_enabled",
+        "jjchess_api_url",
+        "jjchess_api_key",
+        "jjchess_model",
+        "jjchess_my_side"
+      ],
+      "settings": [
+        {
+          "id": "jjchess_enabled",
+          "name": "启用军师",
+          "val": "true",
+          "type": "boolean",
+          "desc": "开启后每步棋自动分析并通知"
+        },
+        {
+          "id": "jjchess_api_url",
+          "name": "AI 接口地址",
+          "val": "",
+          "type": "text",
+          "desc": "OpenAI 兼容接口，如 CPA 网关地址（完整路径含 /v1/chat/completions）"
+        },
+        {
+          "id": "jjchess_api_key",
+          "name": "API Key",
+          "val": "",
+          "type": "text",
+          "desc": "AI 接口的 API Key"
+        },
+        {
+          "id": "jjchess_model",
+          "name": "模型",
+          "val": "gemini-3.8-flash-high",
+          "type": "text",
+          "desc": "推荐 gemini-3.8-flash-high，速度快够用"
+        },
+        {
+          "id": "jjchess_my_side",
+          "name": "我方颜色",
+          "val": "both",
+          "type": "selects",
+          "items": ["both", "red", "black"],
+          "desc": "both=双方都分析 red=只分析红方回合 black=只分析黑方回合"
+        }
+      ]
+    }
+  ]
+}
