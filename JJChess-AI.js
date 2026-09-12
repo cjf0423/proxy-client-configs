@@ -59,13 +59,16 @@ function main() {
         return;
     }
 
-    // 去重
+    // 去重：相同局面不重复分析（但间隔超过5秒则重新分析）
     var lastOrder = $persistentStore.read("jjchess_last_order");
-    if (order === lastOrder) {
+    var lastTime = parseInt($persistentStore.read("jjchess_last_time") || "0");
+    var now = new Date().getTime();
+    if (order === lastOrder && (now - lastTime) < 5000) {
         $done({});
         return;
     }
     $persistentStore.write(order, "jjchess_last_order");
+    $persistentStore.write(String(now), "jjchess_last_time");
 
     // 解析 FEN
     var afterFen = order.substring(13);
@@ -118,8 +121,7 @@ function main() {
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 300
         }),
-        timeout: 55,
-        node: "DIRECT"
+        timeout: 55
     }, function(err, resp, data) {
         if (err) {
             $notification.post('♟️ 象棋军师', 'AI 请求失败', String(err));
