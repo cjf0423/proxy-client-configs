@@ -1,81 +1,138 @@
 /*
     拼多多 AI 购物助手
-    拦截商品数据，通过大模型分析商品是否值得购买
+    精准分析你正在看的商品
 
     BoxJS 订阅: https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/pdd-ai-boxjs.json
 
+    工作原理:
+    1. 拦截推荐流响应，缓存所有商品信息（按 goods_id 索引）
+    2. 拦截埋点请求，检测 page_name=goods_detail 时提取 goods_id
+    3. 从缓存中找到商品信息，调 AI 分析
+
     Surge:
     [Script]
-    PDD-AI = type=http-response, pattern=https:\/\/api\.pinduoduo\.com\/api\/alexa\/(cells\/hub|homepage\/hub), requires-body=1, max-size=0, timeout=60, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/PDD-AI.js
+    PDD-Cache = type=http-response, pattern=https:\/\/api\.pinduoduo\.com\/api\/alexa\/(cells\/hub|homepage\/hub), requires-body=1, max-size=0, timeout=30, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/PDD-AI.js, argument=cache
+    PDD-Analyze = type=http-request, pattern=https:\/\/th-b\.pinduoduo\.com\/t\.gif, requires-body=1, max-size=0, timeout=60, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/PDD-AI.js, argument=analyze
     [MITM]
-    hostname = api.pinduoduo.com
+    hostname = api.pinduoduo.com, th-b.pinduoduo.com
 
     作者: 小H
 */
 
-// ============ BoxJS 配置 ============
+var mode = typeof $argument !== 'undefined' ? $argument : '';
 var enabled = $persistentStore.read("pdd_ai_enabled") !== "false";
-var apiUrl = $persistentStore.read("pdd_ai_api_url") || "";
-var apiKey = $persistentStore.read("pdd_ai_api_key") || "";
-var model = $persistentStore.read("pdd_ai_model") || "gemini-3.8-flash-high";
-var cooldown = parseInt($persistentStore.read("pdd_ai_cooldown") || "30");
-var responseBody = $response.body;
 
-if (!enabled || !apiUrl || !apiKey) {
-    $done({ body: responseBody });
+if (!enabled) {
+    $done({});
+} else if (mode === 'cache') {
+    cacheProducts();
+} else if (mode === 'analyze') {
+    analyzeProduct();
 } else {
-    try {
-        main();
-    } catch (e) {
-        $notification.post('🛒 购物助手', '脚本异常', String(e));
-        $done({ body: responseBody });
-    }
+    $done({});
 }
 
-function main() {
-    // 冷却检查
+// ============ 模式1: 缓存商品数据 ============
+function cacheProducts() {
+    var body = $response.body;
+    try {
+        var data = JSON.parse(body);
+        var products = [];
+        findProducts(data, products, 0);
+
+        if (products.length > 0) {
+            // 读取已有缓存
+            var cache = {};
+            try {
+                cache = JSON.parse($persistentStore.read("pdd_ai_goods_cache") || "{}");
+            } catch(e) {}
+
+            // 添加新商品到缓存
+            for (var i = 0; i < products.length; i++) {
+                var p = products[i];
+                cache[String(p.goods_id)] = p;
+            }
+
+            // 只保留最近50个商品，防止缓存太大
+            var keys = Object.keys(cache);
+            if (keys.length > 50) {
+                var toRemove = keys.slice(0, keys.length - 50);
+                for (var j = 0; j < toRemove.length; j++) {
+                    delete cache[toRemove[j]];
+                }
+            }
+
+            $persistentStore.write(JSON.stringify(cache), "pdd_ai_goods_cache");
+        }
+    } catch(e) {
+        // 静默
+    }
+    $done({ body: body });
+}
+
+// ============ 模式2: 检测商品详情页并分析 ============
+function analyzeProduct() {
+    var apiUrl = $persistentStore.read("pdd_ai_api_url") || "";
+    var apiKey = $persistentStore.read("pdd_ai_api_key") || "";
+    var modelName = $persistentStore.read("pdd_ai_model") || "gemini-3.8-flash-high";
+    var cooldown = parseInt($persistentStore.read("pdd_ai_cooldown") || "30");
+
+    if (!apiUrl || !apiKey) {
+        $done({});
+        return;
+    }
+
+    // 从 POST body 中提取参数
+    var body = $request.body || '';
+    
+    // 检查是否是商品详情页的埋点
+    if (body.indexOf('page_name=goods_detail') === -1) {
+        $done({});
+        return;
+    }
+
+    // 只在第一次 impr（曝光）时触发，避免重复
+    if (body.indexOf('op=impr') === -1) {
+        $done({});
+        return;
+    }
+
+    // 提取 goods_id
+    var goodsIdMatch = body.match(/refer_goods_id=(\d+)/);
+    if (!goodsIdMatch) {
+        $done({});
+        return;
+    }
+    var goodsId = goodsIdMatch[1];
+
+    // 去重 + 冷却
+    var lastGoodsId = $persistentStore.read("pdd_ai_last_goods_id") || "";
     var lastTime = parseInt($persistentStore.read("pdd_ai_last_time") || "0");
     var now = new Date().getTime();
-    if ((now - lastTime) < cooldown * 1000) {
-        $done({ body: responseBody });
+    
+    if (goodsId === lastGoodsId && (now - lastTime) < cooldown * 1000) {
+        $done({});
         return;
     }
 
-    // 解析响应
-    var data;
+    // 从缓存中查找商品
+    var cache = {};
     try {
-        data = JSON.parse(responseBody);
-    } catch (e) {
-        $done({ body: responseBody });
-        return;
-    }
+        cache = JSON.parse($persistentStore.read("pdd_ai_goods_cache") || "{}");
+    } catch(e) {}
 
-    // 提取商品
-    var products = [];
-    findProducts(data, products, 0);
-    if (products.length === 0) {
-        $done({ body: responseBody });
-        return;
-    }
-
-    // 去重
-    var lastGoodsId = $persistentStore.read("pdd_ai_last_goods_id") || "";
-    var product = null;
-    for (var i = 0; i < products.length; i++) {
-        if (String(products[i].goods_id) !== lastGoodsId) {
-            product = products[i];
-            break;
-        }
-    }
+    var product = cache[goodsId];
     if (!product) {
-        $done({ body: responseBody });
+        // 缓存中没有，可能是从搜索/其他入口进来的
+        $notification.post('🛒 购物助手', '商品ID: ' + goodsId, '未从推荐流缓存到该商品信息');
+        $done({});
         return;
     }
 
+    $persistentStore.write(goodsId, "pdd_ai_last_goods_id");
     $persistentStore.write(String(now), "pdd_ai_last_time");
-    $persistentStore.write(String(product.goods_id), "pdd_ai_last_goods_id");
 
-    // 构建 prompt
+    // 构建 AI prompt
     var info = '商品名: ' + product.name + '\n'
         + '拼团价: ¥' + product.price + '\n'
         + '原价: ¥' + product.originalPrice + '\n';
@@ -90,13 +147,12 @@ function main() {
         + '2. ⚠️ 风险提醒：有没有坑？\n'
         + '3. ✅ 购买建议：一句话总结。';
 
-    // 安全超时 - 5秒内AI没响应就先放行
-    var timer = setTimeout(function() {
-        $notification.post('🛒 ' + product.name.substring(0, 20), '¥' + product.price + ' | 原价¥' + product.originalPrice, 'AI 分析超时，请稍后查看');
-        $done({ body: responseBody });
-    }, 5000);
+    // 通知正在分析
+    $notification.post('🛒 ' + product.name.substring(0, 20), '¥' + product.price + ' | 原价¥' + product.originalPrice, '正在 AI 分析...');
 
-    // 调用 AI
+    // 调用 AI（放行请求后异步）
+    $done({});
+
     $httpClient.post({
         url: apiUrl,
         headers: {
@@ -105,35 +161,33 @@ function main() {
             'X-Surge-Skip-Scripting': 'true'
         },
         body: JSON.stringify({
-            model: model,
+            model: modelName,
             messages: [{ role: 'user', content: prompt }],
             max_tokens: 300
         }),
         timeout: 50
     }, function(err, resp, respData) {
-        clearTimeout(timer);
         if (err) {
             $notification.post('🛒 购物助手', 'AI 请求失败', String(err));
-        } else {
-            try {
-                var result = JSON.parse(respData);
-                if (result.choices && result.choices[0]) {
-                    var content = result.choices[0].message.content;
-                    $notification.post('🛒 ' + product.name.substring(0, 20), '¥' + product.price + ' | 原价¥' + product.originalPrice, content);
-                } else if (result.error) {
-                    $notification.post('🛒 购物助手', '错误', result.error.message || JSON.stringify(result.error));
-                }
-            } catch (e) {
-                $notification.post('🛒 购物助手', '解析失败', respData ? respData.substring(0, 200) : '空');
-            }
+            return;
         }
-        $done({ body: responseBody });
+        try {
+            var result = JSON.parse(respData);
+            if (result.choices && result.choices[0]) {
+                var content = result.choices[0].message.content;
+                $notification.post('🛒 ' + product.name.substring(0, 20), '¥' + product.price + ' | 原价¥' + product.originalPrice, content);
+            } else if (result.error) {
+                $notification.post('🛒 购物助手', '错误', result.error.message || JSON.stringify(result.error));
+            }
+        } catch(e) {
+            $notification.post('🛒 购物助手', '解析失败', respData ? respData.substring(0, 200) : '空');
+        }
     });
 }
 
-// ============ 提取商品 ============
+// ============ 递归查找商品 ============
 function findProducts(obj, results, depth) {
-    if (depth > 15 || results.length >= 3) return;
+    if (depth > 15 || results.length >= 20) return;
     if (!obj || typeof obj !== 'object') return;
 
     if (obj.goods_name && (obj.group_price !== undefined || obj.normal_price !== undefined)) {
@@ -164,12 +218,12 @@ function findProducts(obj, results, depth) {
     }
 
     if (Array.isArray(obj)) {
-        for (var i = 0; i < obj.length && results.length < 3; i++) {
+        for (var i = 0; i < obj.length && results.length < 20; i++) {
             findProducts(obj[i], results, depth + 1);
         }
     } else {
         var keys = Object.keys(obj);
-        for (var k = 0; k < keys.length && results.length < 3; k++) {
+        for (var k = 0; k < keys.length && results.length < 20; k++) {
             findProducts(obj[keys[k]], results, depth + 1);
         }
     }
