@@ -89,7 +89,7 @@ function main() {
     var turnStr = turn === 'w' ? '红方' : '黑方';
 
     // 先通知：已捕获棋局
-    $notification.post('♟️ 象棋军师', turnStr + '走棋 - 分析中...', 'FEN: ' + currentFen.substring(0, 50));
+    $notification.post('♟️ 象棋军师', turnStr + '走棋', '正在分析最佳走法...');
 
     var prompt = '你是中国象棋特级大师。请分析以下棋局，给出当前最佳走法。\n\n'
         + '【当前棋盘】（上方为黑方，下方为红方）\n'
@@ -110,14 +110,16 @@ function main() {
         url: apiUrl,
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + apiKey
+            'Authorization': 'Bearer ' + apiKey,
+            'X-Surge-Skip-Scripting': 'true'
         },
         body: JSON.stringify({
             model: model,
             messages: [{ role: 'user', content: prompt }],
-            max_tokens: 500
+            max_tokens: 300
         }),
-        timeout: 55
+        timeout: 55,
+        node: "DIRECT"
     }, function(err, resp, data) {
         if (err) {
             $notification.post('♟️ 象棋军师', 'AI 请求失败', String(err));
