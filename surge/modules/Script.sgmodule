@@ -48,8 +48,8 @@ GreasyFork油猴脚本转换器 = type=http-response,pattern=^https:\/\/(greasyf
 
 # N
 # 奈飞评分
-奈飞评分1 = type=http-request,pattern=^https?://ios\.prod\.ftl\.netflix\.com/iosui/user/.+path=%5B%22videos%22%2C%\d+%22%2C%22summary%22%5D,script-path=https://raw.githubusercontent.com/yichahucha/surge/master/nf_rating.js,script-update-interval=0
-奈飞评分2 = type=http-response,pattern=^https?://ios\.prod\.ftl\.netflix\.com/iosui/user/.+path=%5B%22videos%22%2C%\d+%22%2C%22summary%22%5D,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/yichahucha/surge/master/nf_rating.js,script-update-interval=0
+奈飞评分1 = type=http-request,pattern=^https?://ios\.prod\.ftl\.netflix\.com/iosui/user/.+path=%5B%22videos%22%2C%22\d+%22%2C%22summary%22%5D,script-path=https://raw.githubusercontent.com/yichahucha/surge/master/nf_rating.js,script-update-interval=0
+奈飞评分2 = type=http-response,pattern=^https?://ios\.prod\.ftl\.netflix\.com/iosui/user/.+path=%5B%22videos%22%2C%22\d+%22%2C%22summary%22%5D,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/yichahucha/surge/master/nf_rating.js,script-update-interval=0
 
 # 奈飞单集评分
 奈飞单集评分 = type=http-response,pattern=^https?://ios\.prod\.ftl\.netflix\.com/iosui/warmer/.+type=show-ath,requires-body=1,max-size=0,script-path=https://raw.githubusercontent.com/yichahucha/surge/master/nf_rating_season.js,script-update-interval=0
@@ -100,7 +100,7 @@ Sub-Store Simple = type=http-request,pattern=^https?:\/\/sub\.store,script-path=
 
 
 [MITM]
-hostname = %APPEND% ap?.bilibili.com, sub.store, ios.prod.ftl.netflix.com, mp.weixin.qq.com, greasyfork.org, api.m.jd.com, trade-acs.m.taobao.com, *.bili*.*, 124.239.240.*, 101.89.57.66, 218.94.210.66, pan.baidu.com, *.xiuxiu.meitu.com, api.xiuxiu.meitu.com, boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net  
+hostname = %APPEND% ap?.bilibili.com, sub.store, ios.prod.ftl.netflix.com, mp.weixin.qq.com, greasyfork.org, api.m.jd.com, trade-acs.m.taobao.com, pan.baidu.com, *.xiuxiu.meitu.com, boxjs.com, boxjs.net, *.boxjs.com, *.boxjs.net  
 
 
 
