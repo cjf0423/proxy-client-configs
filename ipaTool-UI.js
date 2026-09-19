@@ -1,75 +1,11 @@
 /**
  * ipaTool Web 操作面板
  * 作者: 小H
- * 说明: 拦截 https://ipatool-ui.com 请求
- *       /api/* 路径转发到 apple-api.com（解决跨域问题）
- *       其他路径返回可视化操作网页
- *       在 Safari 中打开 https://ipatool-ui.com 即可使用
+ * 说明: 拦截 https://apple-api.com/ui 请求，返回可视化操作网页
+ *       页面内 fetch 请求（如 /auth/login）走同域，
+ *       由 Surge 的第二条规则（AppleStoreAPI.js）处理
+ *       Safari 打开 https://apple-api.com/ui 即可使用
  */
-
-const url = $request.url;
-const path = url.replace(/^https?:\/\/ipatool-ui\.com/, '') || '/';
-
-// ===== API 代理转发 =====
-if (path.startsWith('/api/')) {
-  const apiPath = path.replace('/api', '');
-  const targetUrl = 'https://apple-api.com' + apiPath;
-  const method = $request.method || 'GET';
-  const headers = Object.assign({}, $request.headers || {});
-  headers['Content-Type'] = headers['Content-Type'] || 'application/json';
-
-  const opts = { url: targetUrl, headers };
-  if ($request.body) opts.body = $request.body;
-
-  const cb = (err, resp, data) => {
-    if (err) {
-      $done({
-        response: {
-          status: 502,
-          headers: {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-          },
-          body: JSON.stringify({ success: false, message: 'Proxy error: ' + err })
-        }
-      });
-      return;
-    }
-    $done({
-      response: {
-        status: resp.status || 200,
-        headers: Object.assign(resp.headers || {}, {
-          'Access-Control-Allow-Origin': '*',
-          'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-          'Access-Control-Allow-Headers': 'Content-Type'
-        }),
-        body: data
-      }
-    });
-  };
-
-  if (method === 'POST') {
-    $httpClient.post(opts, cb);
-  } else {
-    $httpClient.get(opts, cb);
-  }
-
-// ===== OPTIONS preflight =====
-} else if ($request.method === 'OPTIONS') {
-  $done({
-    response: {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-      },
-      body: ''
-    }
-  });
-
-// ===== 返回 HTML 页面 =====
-} else {
 
 const HTML = `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -209,8 +145,8 @@ h1{font-size:22px;text-align:center;padding:16px 0 8px;display:flex;align-items:
 <div class="toast" id="toast"></div>
 
 <script>
-// API 通过同域 /api/ 代理转发到 apple-api.com，避免跨域问题
-const API = '/api';
+// 同域请求，fetch 直接用绝对 URL
+const API = 'https://apple-api.com';
 
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach((t, i) => {
@@ -461,14 +397,13 @@ async function doPurchase() {
 </body>
 </html>`;
 
-  $done({
-    response: {
-      status: 200,
-      headers: {
-        'Content-Type': 'text/html; charset=utf-8',
-        'Cache-Control': 'no-cache'
-      },
-      body: HTML
-    }
-  });
-}
+$done({
+  response: {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache'
+    },
+    body: HTML
+  }
+});

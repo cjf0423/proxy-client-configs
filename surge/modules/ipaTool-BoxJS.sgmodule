@@ -1,16 +1,16 @@
 #!name=ipaTool 应用下载
-#!desc=App Store 历史版本下载 & 已购下架应用安装（Safari 打开 ipatool-ui.com 可视化操作）
+#!desc=App Store 历史版本下载 & 已购下架应用安装（Safari 打开 apple-api.com/ui 可视化操作）
 #!category=Tools
 #!author=小H (基于 githubdulong)
-#!version=1.2
+#!version=2.0
 
 [Script]
-# 可视化操作面板 - Safari 打开 https://ipatool-ui.com 即可使用（独立域名避免冲突）
-ipaTool面板 = type=http-request,pattern=https://ipatool-ui\.com,requires-body=0,max-size=0,timeout=30,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/ipaTool-UI.js
-# 原始 API 服务（处理登录、搜索、版本、下载等所有 API 请求）
+# 可视化操作面板（精确匹配 /ui 路径，优先级高于下面的通配）
+ipaTool面板 = type=http-request,pattern=^https://apple-api\.com/ui,requires-body=0,max-size=0,timeout=30,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/ipaTool-UI.js
+# 原始 API 服务（和原始模块完全一致的 pattern，处理其余所有请求）
 应用接口 = type=http-request,pattern=https://apple-api.com,requires-body=1,max-size=-1,binary-body-mode=0,timeout=30,debug=1,script-path=https://raw.githubusercontent.com/githubdulong/Script/master/AppleStoreAPI.js,timeout=120
 # IPA 安装清单生成
 应用安装 = type=http-request,pattern=https:\/\/xiaobai\.app,requires-body=0,script-path=https://raw.githubusercontent.com/githubdulong/Script/master/installapp.js,timeout=120
 
 [MITM]
-hostname = %APPEND% ipatool-ui.com, apple-api.com, xiaobai.app
+hostname = %APPEND% apple-api.com, xiaobai.app
