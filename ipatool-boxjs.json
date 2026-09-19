@@ -1,0 +1,114 @@
+{
+  "id": "cjf0423.ipatool",
+  "name": "ipaTool - App Store 历史版本下载",
+  "author": "小H",
+  "description": "App Store 低版本应用安装、已购下架应用安装，基于 githubdulong/Script",
+  "icon": "https://raw.githubusercontent.com/Koolson/Qure/master/IconSet/Color/Apple.png",
+  "apps": [
+    {
+      "id": "cjf0423.ipatool",
+      "name": "ipaTool 配置",
+      "descs_html": [
+        "<h2>📱 App Store 历史版本下载</h2>",
+        "<p>基于 githubdulong/Script 的 ipaTool 模块，提供可视化操作界面</p>",
+        "<h3>使用步骤</h3>",
+        "<p>1️⃣ 先安装 <a href='https://raw.githubusercontent.com/githubdulong/Script/master/Surge/ipaTool.sgmodule'>ipaTool 模块</a> 并开启 MITM</p>",
+        "<p>2️⃣ 填写 Apple ID 和密码，执行 <b>login</b> 登录</p>",
+        "<p>3️⃣ 如需双重验证，填写验证码后再次 login</p>",
+        "<p>4️⃣ 填写搜索关键词，执行 <b>search</b> 搜索应用</p>",
+        "<p>5️⃣ 填写应用 ID，执行 <b>versions</b> 查看历史版本</p>",
+        "<p>6️⃣ 填写版本 ID，执行 <b>download</b> 获取下载链接</p>",
+        "<h3>操作指令</h3>",
+        "<p><code>login</code> 登录 | <code>search</code> 搜索 | <code>versions</code> 版本列表 | <code>download</code> 下载 | <code>purchase</code> 购买 | <code>refresh</code> 刷新Token | <code>reset</code> 重置</p>"
+      ],
+      "keys": [
+        "ipatool_action",
+        "ipatool_apple_id",
+        "ipatool_password",
+        "ipatool_2fa_code",
+        "ipatool_country",
+        "ipatool_search_term",
+        "ipatool_app_id",
+        "ipatool_version_id",
+        "ipatool_version_source",
+        "ipatool_last_result"
+      ],
+      "settings": [
+        {
+          "id": "ipatool_action",
+          "name": "⚡ 操作指令",
+          "val": "search",
+          "type": "selects",
+          "items": ["login", "search", "versions", "download", "purchase", "refresh", "reset"],
+          "desc": "选择操作后手动运行脚本执行"
+        },
+        {
+          "id": "ipatool_apple_id",
+          "name": "Apple ID",
+          "val": "",
+          "type": "text",
+          "desc": "Apple ID 邮箱"
+        },
+        {
+          "id": "ipatool_password",
+          "name": "🔒 密码",
+          "val": "",
+          "type": "text",
+          "desc": "Apple ID 密码（登录成功后自动清除）"
+        },
+        {
+          "id": "ipatool_2fa_code",
+          "name": "🔐 双重验证码",
+          "val": "",
+          "type": "text",
+          "desc": "6位验证码（首次登录需要，用完自动清除）"
+        },
+        {
+          "id": "ipatool_country",
+          "name": "商店地区",
+          "val": "CN",
+          "type": "selects",
+          "items": ["CN", "US", "JP", "HK", "TW", "GB", "KR"],
+          "desc": "搜索时的 App Store 地区"
+        },
+        {
+          "id": "ipatool_search_term",
+          "name": "🔍 搜索关键词",
+          "val": "",
+          "type": "text",
+          "desc": "要搜索的 App 名称"
+        },
+        {
+          "id": "ipatool_app_id",
+          "name": "📱 应用 ID",
+          "val": "",
+          "type": "text",
+          "desc": "应用 ID（从搜索结果中获取数字 ID）"
+        },
+        {
+          "id": "ipatool_version_id",
+          "name": "📌 版本 ID",
+          "val": "",
+          "type": "text",
+          "desc": "指定版本 ID（留空获取最新版）"
+        },
+        {
+          "id": "ipatool_version_source",
+          "name": "版本数据源",
+          "val": "official",
+          "type": "selects",
+          "items": ["official", "Timbrd", "Bilin"],
+          "desc": "official=官方+三方合并 Timbrd/Bilin=指定第三方"
+        },
+        {
+          "id": "ipatool_last_result",
+          "name": "📋 操作结果",
+          "val": "尚无操作结果",
+          "type": "textarea",
+          "desc": "最近一次操作的返回结果",
+          "autoGrow": true
+        }
+      ]
+    }
+  ]
+}

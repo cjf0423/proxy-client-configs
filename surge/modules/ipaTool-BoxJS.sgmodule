@@ -1,0 +1,16 @@
+#!name=ipaTool BoxJS Edition
+#!desc=App Store 历史版本下载 & 已购下架应用安装 (BoxJS 配置版)
+#!category=Tools
+#!author=小H (基于 githubdulong)
+#!version=1.0
+
+[Script]
+# 原始 ipaTool API 服务（拦截 apple-api.com 请求，在本地起 API 服务）
+应用接口 = type=http-request,pattern=https://apple-api.com,requires-body=1,max-size=-1,binary-body-mode=0,timeout=30,debug=1,script-path=https://raw.githubusercontent.com/githubdulong/Script/master/AppleStoreAPI.js,timeout=120
+# IPA 安装清单生成（拦截 xiaobai.app 请求，生成 itms-services 安装清单）
+应用安装 = type=http-request,pattern=https:\/\/xiaobai\.app,requires-body=0,script-path=https://raw.githubusercontent.com/githubdulong/Script/master/installapp.js,timeout=120
+# BoxJS 操作面板脚本（手动运行触发操作）
+ipaTool面板 = type=cron,cronexp=0 0 1 1 *,wake-system=1,timeout=120,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/ipaTool-BoxJS.js
+
+[MITM]
+hostname = %APPEND% apple-api.com, xiaobai.app
