@@ -1,0 +1,45 @@
+name: "ipaTool 应用下载"
+desc: "App Store 历史版本下载 & 已购下架应用安装（Safari 打开 ipatool-ui.com 可视化操作）"
+
+http:
+  mitm:
+    - "ipatool-ui.com"
+    - "apple-api.com"
+    - "xiaobai.app"
+
+  script:
+    # 可视化操作面板 - Safari 打开 https://ipatool-ui.com 即可使用
+    - match: ^https://ipatool-ui\.com
+      name: ipaTool面板
+      type: request
+      require-body: false
+      timeout: 30
+
+    # 原始 API 服务（处理登录、搜索、版本、下载等所有 API 请求）
+    - match: ^https://apple-api\.com
+      name: 应用接口
+      type: request
+      require-body: true
+      max-size: -1
+      binary-body-mode: false
+      timeout: 120
+
+    # IPA 安装清单生成
+    - match: ^https://xiaobai\.app
+      name: 应用安装
+      type: request
+      require-body: false
+      timeout: 120
+
+script-providers:
+  ipaTool面板:
+    url: https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/ipaTool-UI.js
+    interval: 86400
+
+  应用接口:
+    url: https://raw.githubusercontent.com/githubdulong/Script/master/AppleStoreAPI.js
+    interval: 86400
+
+  应用安装:
+    url: https://raw.githubusercontent.com/githubdulong/Script/master/installapp.js
+    interval: 86400

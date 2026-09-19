@@ -1,0 +1,16 @@
+#!name=ipaTool 应用下载
+#!desc=App Store 历史版本下载 & 已购下架应用安装（Safari 打开 ipatool-ui.com 可视化操作）
+#!author=小H (基于 githubdulong)
+
+[Script]
+# 可视化操作面板
+http-request https://ipatool-ui\.com script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/ipaTool-UI.js, timeout=30, tag=ipaTool面板
+
+# 原始 API 服务
+http-request https://apple-api\.com script-path=https://raw.githubusercontent.com/githubdulong/Script/master/AppleStoreAPI.js, requires-body=true, binary-body-mode=false, timeout=120, tag=应用接口
+
+# IPA 安装清单生成
+http-request https://xiaobai\.app script-path=https://raw.githubusercontent.com/githubdulong/Script/master/installapp.js, timeout=120, tag=应用安装
+
+[MITM]
+hostname = ipatool-ui.com, apple-api.com, xiaobai.app
