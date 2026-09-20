@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ipaTool</title>
+<style>
+:root{--bg:#0d1117;--card:#161b22;--border:#30363d;--text:#e6edf3;--text2:#8b949e;--blue:#58a6ff;--green:#3fb950;--red:#f85149;--orange:#d29922;--radius:12px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:16px;padding-bottom:80px}
+h1{font-size:22px;text-align:center;padding:16px 0 8px;display:flex;align-items:center;justify-content:center;gap:8px}
+.status-bar{text-align:center;padding:6px;margin-bottom:16px;font-size:13px;color:var(--text2);background:var(--card);border-radius:8px;border:1px solid var(--border)}
+.status-bar .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.dot.on{background:var(--green)}.dot.off{background:var(--red)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px}
+.card h2{font-size:15px;color:var(--blue);margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.field{margin-bottom:12px}
+.field label{display:block;font-size:13px;color:var(--text2);margin-bottom:4px}
+.field input,.field select{width:100%;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:15px;outline:none;-webkit-appearance:none}
+.field input:focus,.field select:focus{border-color:var(--blue)}
+.field input::placeholder{color:#484f58}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{flex:1;min-width:0;padding:10px 0;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s;-webkit-tap-highlight-color:transparent}
+.btn:active{opacity:.7}
+.btn-blue{background:var(--blue);color:#0d1117}
+.btn-green{background:var(--green);color:#0d1117}
+.btn-orange{background:var(--orange);color:#0d1117}
+.btn-red{background:var(--red);color:#fff}
+.btn-gray{background:var(--border);color:var(--text)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+#result-box{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-all;max-height:400px;overflow-y:auto;color:var(--text2)}
+.app-item{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;cursor:pointer;transition:border-color .2s;-webkit-tap-highlight-color:transparent}
+.app-item:active{border-color:var(--blue)}
+.app-item .name{font-size:15px;font-weight:600;color:var(--text)}
+.app-item .meta{font-size:12px;color:var(--text2);margin-top:4px}
+.app-item .id-tag{display:inline-block;background:var(--border);color:var(--blue);font-size:11px;padding:2px 6px;border-radius:4px;margin-top:4px;font-family:monospace}
+.ver-item{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-bottom:6px}
+.ver-item .ver-info{flex:1;min-width:0}
+.ver-item .ver-name{font-size:14px;font-weight:500}
+.ver-item .ver-meta{font-size:12px;color:var(--text2);margin-top:2px}
+.ver-item .btn{flex:none;width:auto;padding:6px 14px;font-size:13px;margin-left:8px}
+.loading{text-align:center;padding:20px;color:var(--text2)}
+.loading::after{content:'';display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite;margin-left:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:14px;z-index:999;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90%}
+.toast.show{opacity:1}
+.toast.success{background:var(--green);color:#0d1117}
+.toast.error{background:var(--red);color:#fff}
+.toast.info{background:var(--blue);color:#0d1117}
+.tab-bar{display:flex;gap:4px;margin-bottom:16px;background:var(--card);border-radius:10px;padding:4px;border:1px solid var(--border)}
+.tab{flex:1;text-align:center;padding:8px 0;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);transition:all .2s;-webkit-tap-highlight-color:transparent}
+.tab.active{background:var(--blue);color:#0d1117}
+.page{display:none}.page.active{display:block}
+.note{text-align:center;padding:8px;font-size:12px;color:var(--text2);margin-bottom:12px}
+.note a{color:var(--blue);text-decoration:none}
+</style>
+</head>
+<body>
+<h1>📱 ipaTool</h1>
+<div class="status-bar" id="statusBar"><span class="dot off"></span>未登录</div>
+<div class="note">需要先安装 <a href="https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/modules/ipaTool-BoxJS.sgmodule">Surge 模块</a> 并开启代理</div>
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('login')">🔐 登录</div>
+  <div class="tab" onclick="switchTab('search')">🔍 搜索</div>
+  <div class="tab" onclick="switchTab('versions')">📜 版本</div>
+  <div class="tab" onclick="switchTab('result')">📋 结果</div>
+</div>
+<div class="page active" id="page-login">
+  <div class="card">
+    <h2>🔐 Apple ID 登录</h2>
+    <div class="field"><label>Apple ID</label><input type="email" id="appleId" placeholder="your@icloud.com"></div>
+    <div class="field"><label>密码</label><input type="password" id="password" placeholder="Apple ID 密码"></div>
+    <div class="field" id="codeField" style="display:none"><label>双重验证码</label><input type="text" id="code" placeholder="6位验证码" maxlength="6" inputmode="numeric"></div>
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="doLogin()">登录</button>
+      <button class="btn btn-gray" onclick="doRefresh()">刷新</button>
+      <button class="btn btn-red" onclick="doReset()">重置</button>
+    </div>
+  </div>
+</div>
+<div class="page" id="page-search">
+  <div class="card">
+    <h2>🔍 搜索应用</h2>
+    <div class="field"><label>关键词</label><input type="text" id="searchTerm" placeholder="输入应用名称" enterkeyhint="search" onkeydown="if(event.key==='Enter')doSearch()"></div>
+    <div class="btn-row" style="margin-bottom:12px">
+      <select id="country" style="flex:0 0 80px;padding:10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px">
+        <option value="CN">🇨🇳 CN</option><option value="US">🇺🇸 US</option><option value="JP">🇯🇵 JP</option>
+        <option value="HK">🇭🇰 HK</option><option value="TW">TW</option><option value="GB">🇬🇧 GB</option><option value="KR">🇰🇷 KR</option>
+      </select>
+      <button class="btn btn-blue" onclick="doSearch()">搜索</button>
+    </div>
+  </div>
+  <div id="searchResults"></div>
+</div>
+<div class="page" id="page-versions">
+  <div class="card">
+    <h2>📜 应用版本</h2>
+    <div class="field"><label>应用 ID</label><input type="text" id="appId" placeholder="从搜索结果中点击获取" inputmode="numeric"></div>
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="doVersions()">查看版本</button>
+      <button class="btn btn-green" onclick="doPurchase()">购买应用</button>
+    </div>
+  </div>
+  <div id="versionResults"></div>
+</div>
+<div class="page" id="page-result">
+  <div class="card"><h2>📋 操作结果</h2><div id="result-box">等待操作...</div></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const API='https://apple-api.com';
+function switchTab(n){document.querySelectorAll('.tab').forEach((t,i)=>{t.classList.toggle('active',['login','search','versions','result'][i]===n)});document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+n).classList.add('active')}
+function toast(m,t='info'){const e=document.getElementById('toast');e.textContent=m;e.className='toast show '+t;setTimeout(()=>e.className='toast',2500)}
+function setStatus(l,t){document.getElementById('statusBar').innerHTML='<span class="dot '+(l?'on':'off')+'"></span>'+t}
+function setResult(t){document.getElementById('result-box').textContent=typeof t==='object'?JSON.stringify(t,null,2):t}
+async function api(m,p,b){const o={method:m,headers:{'Content-Type':'application/json'}};if(b)o.body=JSON.stringify(b);try{const r=await fetch(API+p,o);return await r.json()}catch(e){throw new Error('网络请求失败，请确认 Surge 代理已开启且模块已安装')}}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+async function doLogin(){const a=document.getElementById('appleId').value.trim(),p=document.getElementById('password').value,c=document.getElementById('code').value.trim();if(!a||!p)return toast('请填写 Apple ID 和密码','error');toast('登录中...');const b={appleId:a,password:p};if(c)b.code=c;try{const r=await api('POST','/auth/login',b);setResult(r);if(r.success){setStatus(true,'已登录: '+(r.data?.accountInfo?.appleId||a));toast('登录成功 ✅','success');document.getElementById('password').value='';document.getElementById('code').value='';document.getElementById('codeField').style.display='none'}else{const m=r.message||r.error||JSON.stringify(r);if(m.includes('验证')||m.includes('code')||m.includes('2FA')||m.includes('Code')){document.getElementById('codeField').style.display='block';document.getElementById('code').focus();toast('请输入双重验证码','info')}else toast('登录失败: '+m,'error')}}catch(e){toast(e.message,'error')}}
+async function doRefresh(){toast('刷新 Token...');try{const r=await api('POST','/auth/refresh');setResult(r);r.success?(setStatus(true,'已登录'),toast('Token 已刷新 ✅','success')):toast('刷新失败: '+(r.message||r.error||''),'error')}catch(e){toast(e.message,'error')}}
+async function doReset(){toast('重置中...');try{const r=await api('POST','/auth/reset');setResult(r);setStatus(false,'未登录');toast(r.success?'已重置 ✅':'重置失败',r.success?'success':'error')}catch(e){toast(e.message,'error')}}
+async function doSearch(){const t=document.getElementById('searchTerm').value.trim(),c=document.getElementById('country').value;if(!t)return toast('请输入搜索关键词','error');const b=document.getElementById('searchResults');b.innerHTML='<div class="loading">搜索中</div>';try{const r=await api('GET','/apps/search/'+encodeURIComponent(t)+'?limit=10&country='+c);setResult(r);if(r.success&&r.data?.results?.length){b.innerHTML=r.data.results.map(a=>'<div class="app-item" data-id="'+(a.trackId||a.appId)+'" data-name="'+esc(a.trackName||a.name||'?')+'" onclick="selectApp(this)"><div class="name">'+esc(a.trackName||a.name||'?')+'</div><div class="meta">'+esc(a.artistName||'')+(a.version?' · v'+a.version:'')+(a.fileSizeBytes?' · '+(a.fileSizeBytes/1048576).toFixed(1)+'MB':'')+'</div><span class="id-tag">ID: '+(a.trackId||a.appId)+'</span></div>').join('');toast('找到 '+r.data.results.length+' 个应用','success')}else{b.innerHTML='<div class="card" style="text-align:center;color:var(--text2)">未找到相关应用</div>';toast('无搜索结果','error')}}catch(e){b.innerHTML='';toast(e.message,'error')}}
+function selectApp(e){document.getElementById('appId').value=e.dataset.id;switchTab('versions');toast('已选择: '+e.dataset.name,'info')}
+async function doVersions(){const id=document.getElementById('appId').value.trim();if(!id)return toast('请填写应用 ID','error');const b=document.getElementById('versionResults');b.innerHTML='<div class="loading">加载版本列表</div>';try{const r=await api('GET','/apps/'+id+'/versions');setResult(r);if(r.success&&r.data){const l=r.data.versionList||r.data.versions||r.data;if(Array.isArray(l)&&l.length){b.innerHTML=l.slice(0,50).map(v=>'<div class="ver-item"><div class="ver-info"><div class="ver-name">v'+esc(v.displayVersion||v.version||v.bundle_version||'?')+'</div><div class="ver-meta">ID: '+(v.appVerId||v.external_identifier||v.versionId||'?')+(v.releaseDate||v.created?' · '+(v.releaseDate||v.created):'')+'</div></div><button class="btn btn-green" data-appid="'+id+'" data-verid="'+(v.appVerId||v.external_identifier||v.versionId)+'" onclick="doDownload(this)">下载</button></div>').join('');toast('加载了 '+Math.min(l.length,50)+' 个版本','success')}else b.innerHTML='<div class="card" style="text-align:center;color:var(--text2)">暂无版本数据</div>'}else{b.innerHTML='<div class="card" style="text-align:center;color:var(--red)">'+esc(r.message||r.error||'查询失败')+'</div>';toast('查询失败','error')}}catch(e){b.innerHTML='';toast(e.message,'error')}}
+async function doDownload(e){const id=e?.dataset?.appid||document.getElementById('appId').value.trim(),vid=e?.dataset?.verid;if(!id)return toast('请填写应用 ID','error');toast('获取下载信息...');try{let p='/apps/'+id;if(vid)p+='?appVerId='+vid;const r=await api('GET',p);setResult(r);if(r.success&&r.data){const d=r.data,u=d.url||d.downloadUrl||'';if(u){const ip='name='+encodeURIComponent(d.name||'App')+'&displayVersion='+encodeURIComponent(d.displayVersion||d.version||'1.0')+'&bundleId='+encodeURIComponent(d.bundleId||'')+'&fileName='+encodeURIComponent(u.split('/').pop()||'');toast((d.name||'App')+' v'+(d.displayVersion||d.version||'?')+' 准备安装...','success');setTimeout(()=>{window.location.href='itms-services://?action=download-manifest&url='+encodeURIComponent('https://xiaobai.app?'+ip)},500)}else toast('未获取到下载链接','error')}else toast('获取失败: '+(r.message||r.error||''),'error')}catch(e){toast(e.message,'error')}}
+async function doPurchase(){const id=document.getElementById('appId').value.trim();if(!id)return toast('请填写应用 ID','error');toast('购买中...');try{const r=await api('POST','/apps/'+id+'/purchase');setResult(r);toast(r.success?'购买成功 ✅':'购买失败: '+(r.message||r.error||''),r.success?'success':'error')}catch(e){toast(e.message,'error')}}
+(async()=>{try{const r=await api('POST','/auth/refresh');if(r.success)setStatus(true,'已登录')}catch(e){}})();
+</script>
+</body>
+</html>
