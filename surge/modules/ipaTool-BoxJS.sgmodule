@@ -1,14 +1,12 @@
 #!name=ipaTool 应用下载
-#!desc=App Store 历史版本下载 & 已购下架应用安装
+#!desc=App Store 历史版本下载 & 已购下架应用安装（Safari 打开 apple-api.com/ui）
 #!category=Tools
 #!author=小H (基于 githubdulong)
-#!version=3.1
+#!version=4.0
 
 [Script]
-# 原始 API 服务（处理请求）
-应用接口 = type=http-request,pattern=https://apple-api.com,requires-body=1,max-size=-1,binary-body-mode=0,timeout=30,debug=1,script-path=https://raw.githubusercontent.com/githubdulong/Script/master/AppleStoreAPI.js,timeout=120
-# CORS 修复（给响应加跨域头，让 GitHub Pages 的网页能调用 API）
-跨域修复 = type=http-response,pattern=https://apple-api.com,requires-body=0,timeout=10,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/ipaTool-cors.js
+# API 服务 + UI 面板（fork 原始脚本，内嵌 /ui 路由）
+应用接口 = type=http-request,pattern=https://apple-api.com,requires-body=1,max-size=-1,binary-body-mode=0,timeout=30,debug=1,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/AppleStoreAPI.js,timeout=120
 # IPA 安装清单生成
 应用安装 = type=http-request,pattern=https:\/\/xiaobai\.app,requires-body=0,script-path=https://raw.githubusercontent.com/githubdulong/Script/master/installapp.js,timeout=120
 
