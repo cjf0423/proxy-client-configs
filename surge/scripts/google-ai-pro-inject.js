@@ -1,16 +1,21 @@
 /*
- * Google AI Pro Offer Injector — defensive Surge edition, v2.0.3
+ * Google AI Pro Offer Injector — defensive Surge edition, v2.1.0
  * Original author: 小龙虾 🦞; defensive refactor: 小H.
- * Local transformation only: no network calls, no credentials/storage access.
+ * No network calls or credential access. Storage holds only notification cooldown layer/time.
  * A changed request is NOT evidence of an accepted offer or account eligibility.
- * Defaults retain the original layer (12m), but PRESERVE signature-related fields.
- * Optional $argument JSON: {"layer":"12m","debug":false,"clearSignature":false}
- * Layers: 12m / 6m_ss / 6m / 6m_2 / off. No automatic purchase or layer cycling.
+ * Default OFF (0). Preserve the working v2.0.3 request transforms and signature fields.
+ * Optional $argument JSON: {"layer":"0","debug":false,"clearSignature":false}
+ * Layers: 0=off, 1=12m, 2=6m_ss, 3=6m, 4=6m_2; legacy names also accepted.
+ * Successful request changes notify once per same-layer 120s burst (best-effort dedupe).
  */
 (function () {
   "use strict";
-  var VERSION = "2.0.3";
-  var DEFAULT_LAYER = "12m";
+  var VERSION = "2.1.0";
+  var DEFAULT_LAYER = "off";
+  var LAYER_CODES = { "0": "off", "1": "12m", "2": "6m_ss", "3": "6m", "4": "6m_2" };
+  var LAYER_LABELS = { "12m": "第一层 · 12 个月", "6m_ss": "第二层 · 6 个月 SS", "6m": "第三层 · 6 个月", "6m_2": "备用层 · 6 个月" };
+  var NOTICE_KEY = "gapt.notice.v1";
+  var NOTICE_COOLDOWN = 120000; // One per same-layer request burst, shared by both hooks.
   var MAX_INPUT = 1048576;
   var PREFIX = "subs:com.google.android.apps.subscriptions.red:";
   // Values preserved verbatim from the user-supplied archive; validity not verified.
@@ -229,6 +234,38 @@
     if (url.length > MAX_INPUT) fail("OUTPUT_TOO_LARGE");
     return { output: { url: url }, locations: matched, changed: changed, route: "URL" };
   }
+  function normalizeLayer(value) {
+    if (typeof value !== "string" && typeof value !== "number") fail("INVALID_ARGUMENT_TYPE");
+    var text = String(value).trim();
+    if (Object.prototype.hasOwnProperty.call(LAYER_CODES, text)) return LAYER_CODES[text];
+    if (typeof value === "string" && (text === "off" || Object.prototype.hasOwnProperty.call(TOKENS, text))) return text;
+    fail("INVALID_LAYER");
+  }
+  function notifyInjection(layer) {
+    // Notification/storage failures must NEVER undo a working request rewrite.
+    try {
+      if (typeof $notification === "undefined" || typeof $notification.post !== "function") return;
+      if (typeof $persistentStore === "undefined" || typeof $persistentStore.read !== "function" || typeof $persistentStore.write !== "function") {
+        log("通知跳过：无防重复存储支持");
+        return;
+      }
+      var now = Date.now(), previous = null;
+      var stored = $persistentStore.read(NOTICE_KEY);
+      try { previous = JSON.parse(stored || "null"); } catch (_) {}
+      if (previous && previous.layer === layer && typeof previous.at === "number" && now >= previous.at && now - previous.at < NOTICE_COOLDOWN) return;
+      // Reserve before posting: both request hooks use the same non-sensitive key.
+      if (!$persistentStore.write(JSON.stringify({ layer: layer, at: now }), NOTICE_KEY)) {
+        log("通知跳过：防重复状态未保存");
+        return;
+      }
+      try {
+        $notification.post("✨ Google AI Pro", "✅ 请求注入成功 · " + LAYER_LABELS[layer], "已完成请求改写，请核对结账页金额、期限和续费条款。\n此通知不代表优惠已获 Google 确认。");
+      } catch (_) {
+        try { $persistentStore.write("", NOTICE_KEY); } catch (ignored) {}
+        log("通知发送失败；请求改写不受影响");
+      }
+    } catch (_) { log("通知不可用；请求改写不受影响"); }
+  }
   function configFromArgument() {
     var config = { layer: DEFAULT_LAYER, debug: false, clearSignature: false };
     if (typeof $argument === "undefined" || $argument === "") return config;
@@ -239,8 +276,11 @@
     for (var key in value) {
       if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
       if (!Object.prototype.hasOwnProperty.call(allowed, key)) fail("UNKNOWN_ARGUMENT_KEY");
-      if (typeof value[key] !== typeof config[key]) fail("INVALID_ARGUMENT_TYPE");
-      config[key] = value[key];
+      if (key === "layer") config.layer = normalizeLayer(value[key]);
+      else {
+        if (typeof value[key] !== typeof config[key]) fail("INVALID_ARGUMENT_TYPE");
+        config[key] = value[key];
+      }
     }
     return config;
   }
@@ -268,6 +308,7 @@
       if (result.output) {
         log("已改写请求 " + result.route + "；layer=" + config.layer + "；位置=" + result.locations + "；字段变化=" + result.changed + "。未验证服务端优惠。");
         output = result.output;
+        notifyInjection(config.layer);
       } else if (config.debug) log("原样放行：" + result.reason);
     }
   } catch (error) {
