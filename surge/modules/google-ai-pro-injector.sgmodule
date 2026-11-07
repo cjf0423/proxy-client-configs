@@ -2,9 +2,9 @@
 #!desc=防御性请求改写：失败原样放行、可重复执行、保留签名字段。不会验证或保证优惠资格。GitHub 远程脚本版。
 #!category=Tools
 #!author=小龙虾 🦞 / 小H
-#!version=2.0.2
+#!version=2.0.3
 #!arguments=layer:12m
-#!arguments-desc=layer：off 关闭；12m 第一层；6m_ss 第二层；6m 第三层；6m_2 备用。保存后重新打开结账页。v2.0.2 修复内层字段类型过严，仍不保证优惠资格。
+#!arguments-desc=layer：off 关闭；12m 第一层；6m_ss 第二层；6m 第三层；6m_2 备用。保存后重新打开结账页。v2.0.3 短内层保持原样，继续外层改写，仍不保证优惠资格。
 
 [MITM]
 hostname = %APPEND% one.google.com, play.google.com, tokenized.play.google.com
@@ -12,5 +12,5 @@ hostname = %APPEND% one.google.com, play.google.com, tokenized.play.google.com
 [Script]
 # layer: 12m / 6m_ss / 6m / 6m_2 / off; server eligibility is NOT verified.
 # Disable older matching http-request modules to avoid first-match conflicts.
-google-ai-pro-body = type=http-request, pattern=^https://one\.google\.com/_/SubscriptionsUi/data/batchexecute(?:[?#]|$), requires-body=true, max-size=1048576, timeout=5, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/google-ai-pro-inject.js?v=2.0.2, script-update-interval=86400, argument="{\"layer\":\"{{{layer}}}\"}"
-google-ai-pro-ear = type=http-request, pattern=^https://(?:play|tokenized\.play)\.google\.com/(?:[^?#]*/)?eacquire/multiline(?:[?#]|$), requires-body=false, timeout=5, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/google-ai-pro-inject.js?v=2.0.2, script-update-interval=86400, argument="{\"layer\":\"{{{layer}}}\"}"
+google-ai-pro-body = type=http-request, pattern=^https://one\.google\.com/_/SubscriptionsUi/data/batchexecute(?:[?#]|$), requires-body=true, max-size=1048576, timeout=5, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/google-ai-pro-inject.js?v=2.0.3, script-update-interval=86400, argument="{\"layer\":\"{{{layer}}}\"}"
+google-ai-pro-ear = type=http-request, pattern=^https://(?:play|tokenized\.play)\.google\.com/(?:[^?#]*/)?eacquire/multiline(?:[?#]|$), requires-body=false, timeout=5, script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/google-ai-pro-inject.js?v=2.0.3, script-update-interval=86400, argument="{\"layer\":\"{{{layer}}}\"}"

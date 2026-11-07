@@ -1,5 +1,5 @@
 /*
- * Google AI Pro Offer Injector — defensive Surge edition, v2.0.2
+ * Google AI Pro Offer Injector — defensive Surge edition, v2.0.3
  * Original author: 小龙虾 🦞; defensive refactor: 小H.
  * Local transformation only: no network calls, no credentials/storage access.
  * A changed request is NOT evidence of an accepted offer or account eligibility.
@@ -9,7 +9,7 @@
  */
 (function () {
   "use strict";
-  var VERSION = "2.0.2";
+  var VERSION = "2.0.3";
   var DEFAULT_LAYER = "12m";
   var MAX_INPUT = 1048576;
   var PREFIX = "subs:com.google.android.apps.subscriptions.red:";
@@ -202,15 +202,21 @@
       // Fixed type/length metadata only; never emit payload values or keys.
       var innerKind = inner === null ? "null" : (arr(inner) ? "array" : typeof inner);
       var slotKind = !arr(inner) ? "n/a" : (inner[8] === null ? "null" : (arr(inner[8]) ? "array" : typeof inner[8]));
-      if (!arr(inner) || inner.length <= 8) {
-        log("内层结构：kind=" + innerKind + "; length=" + (arr(inner) ? inner.length : "n/a") + "; slot8=" + slotKind);
+      if (!arr(inner)) {
+        log("内层结构：kind=" + innerKind + "; length=n/a; slot8=n/a");
         fail("UNKNOWN_INNER_ITEMS");
       }
-      if (!arr(inner[8])) log("Chrome兼容结构：kind=array; length=" + inner.length + "; slot8=" + slotKind);
-      matched++;
-      if (assignChanged(inner, 8, [items])) {
-        ear[4][0] = encode64(JSON.stringify(inner), decoded.urlSafe, decoded.padded);
-        changed++;
+      if (inner.length <= 8) {
+        // The original Chrome code leaves this short optional container untouched.
+        // Do NOT extend it or search arbitrary descendants for an offer location.
+        log("跳过可选内层：kind=array; length=" + inner.length + "; 保留原编码；继续检查外层商品");
+      } else {
+        if (!arr(inner[8])) log("Chrome兼容结构：kind=array; length=" + inner.length + "; slot8=" + slotKind);
+        matched++;
+        if (assignChanged(inner, 8, [items])) {
+          ear[4][0] = encode64(JSON.stringify(inner), decoded.urlSafe, decoded.padded);
+          changed++;
+        }
       }
     }
     if (!matched) return { reason: "NO_SUPPORTED_ITEMS" };
