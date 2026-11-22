@@ -1,0 +1,13 @@
+#!name=G1 ACQ
+#!desc=Google One /ai 订阅页商品 ID 映射至真实存在的优惠档(20TB/30TB AI Ultra),不含诊断与上报
+#!system=ios
+
+[Rule]
+# Google App 走 HTTP/3 时响应无法解密,需屏蔽 QUIC
+AND,((PROTOCOL,UDP),(DEST-PORT,443)),REJECT-NO-DROP
+
+[Script]
+g1-acq = type=http-response,pattern=^https:\/\/one\.google\.com\/ai\?,requires-body=1,max-size=0,script-path=https://cdn.jsdelivr.net/gh/cjf0423/proxy-client-configs@main/surge/scripts/g1-acq.js
+
+[MITM]
+hostname = %APPEND% one.google.com
