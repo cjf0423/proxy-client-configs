@@ -1,10 +1,9 @@
 #!name=Claude sessionKey Capture
-#!desc=自动抓取 claude.ai 的 sessionKey，支持多账号，可一键复制导入 claude-free-proxy
+#!desc=自动抓取 claude.ai 的 sessionKey，支持多账号，抓到后推送通知，可一键复制导入 claude-free-proxy
 #!author=cjf0423
 
 [Script]
-Claude Key Capture = type=http-request,pattern=^https?:\/\/claude\.ai\/.*,requires-body=false,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/claude-sessionkey.js
-Claude Key Viewer = type=http-request,pattern=^http:\/\/claude-key\.local,requires-body=false,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/claude-sessionkey.js
+Claude Key Capture = type=http-request,pattern=^https?:\/\/claude\.ai\/,requires-body=false,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/claude-sessionkey.js
 
 [MITM]
-hostname = %APPEND% claude.ai, claude-key.local
+hostname = %APPEND% claude.ai
