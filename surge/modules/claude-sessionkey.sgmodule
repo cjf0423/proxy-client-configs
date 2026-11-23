@@ -4,7 +4,7 @@
 
 [Script]
 Claude Key Capture = type=http-request,pattern=^https?:\/\/claude\.ai\/.*,requires-body=false,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/claude-sessionkey.js
-Claude Key Viewer = type=http-request,pattern=^http:\/\/claude-key\.local\/.*,requires-body=false,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/claude-sessionkey.js
+Claude Key Viewer = type=http-request,pattern=^http:\/\/claude-key\.local,requires-body=false,max-size=0,script-path=https://raw.githubusercontent.com/cjf0423/proxy-client-configs/main/surge/scripts/claude-sessionkey.js
 
 [MITM]
-hostname = %APPEND% claude.ai
+hostname = %APPEND% claude.ai, claude-key.local
