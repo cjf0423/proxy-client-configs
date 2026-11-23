@@ -1,12 +1,19 @@
-// Surge iOS/macOS script: Capture Claude sessionKey
-// 自动从 claude.ai 请求中抓取 sessionKey
+// Surge iOS/macOS script: Capture Claude sessionKey + full Cookie + UA
+// 自动从 claude.ai 请求中抓取完整凭据（含 cf_clearance）
 // 抓到后通过通知推送，同时存入 Surge 持久化存储
-// 键名: claude.proxy.sessionkeys (换行分隔，多账号)
+//
+// 持久化键名:
+//   claude.proxy.sessionkeys    换行分隔的 sessionKey 列表
+//   claude.proxy.last_key       最新 sessionKey
+//   claude.proxy.last_cookie    最新完整 Cookie 头
+//   claude.proxy.last_ua        最新 User-Agent
 
 "use strict";
 
 var KEY_LIST = "claude.proxy.sessionkeys";
 var LAST_KEY = "claude.proxy.last_key";
+var LAST_COOKIE = "claude.proxy.last_cookie";
+var LAST_UA = "claude.proxy.last_ua";
 
 function notify(title, subtitle, body) {
   try {
@@ -67,26 +74,36 @@ function saveKey(sessionKey) {
 
 try {
   var cookie = getHeader($request.headers, "Cookie");
+  var ua = getHeader($request.headers, "User-Agent");
   var cookies = parseCookies(cookie);
   var names = Object.keys(cookies);
 
-  // 尝试所有可能的 Claude session cookie 名
-  var sessionKey = cookies["sessionKey"]
-    || cookies["__Secure-next-auth.session-token"]
-    || cookies["__cf_bm"] && cookies["sessionKey"]  // 确保有 cf 系列时也查
-    || "";
+  var sessionKey = cookies["sessionKey"] || "";
 
   if (sessionKey) {
     var result = saveKey(sessionKey);
+
+    // 每次都更新完整 Cookie 和 UA（cf_clearance 会变）
+    if (cookie) $persistentStore.write(cookie, LAST_COOKIE);
+    if (ua) $persistentStore.write(ua, LAST_UA);
+
+    var hasCfClearance = cookies["cf_clearance"] ? "有" : "无";
+
     if (result.added) {
       notify(
         "✅ Claude sessionKey 已捕获",
-        "新账号 #" + result.count,
-        "Key 前缀: " + mask(sessionKey)
+        "新账号 #" + result.count + " | cf_clearance: " + hasCfClearance,
+        "Key: " + mask(sessionKey) + "\nCookie 和 UA 已一并存储"
+      );
+    } else {
+      // 已存在的 key，但 Cookie/UA 可能更新了（cf_clearance 刷新）
+      notify(
+        "🔄 Claude Cookie 已更新",
+        "cf_clearance: " + hasCfClearance,
+        "Key: " + mask(sessionKey) + "\n完整 Cookie 和 UA 已更新"
       );
     }
   } else if (names.length > 0) {
-    // 脚本触发了但没找到 sessionKey，通知一次帮助调试
     var debugKey = "claude.proxy.debug_notified";
     if (!$persistentStore.read(debugKey)) {
       $persistentStore.write("1", debugKey);
