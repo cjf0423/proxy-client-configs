@@ -1,5 +1,5 @@
 #!name=Claude sessionKey Capture
-#!desc=自动抓取 claude.ai 的 sessionKey，支持多账号，抓到后推送通知，可一键复制导入 claude-free-proxy
+#!desc=抓取 claude.ai 的 sessionKey/Cookie/UA/org，点击通知即复制可导入 claude-free-proxy 的 JSON（仅限自己的账号，数据只存本机 Surge）
 #!author=cjf0423
 
 [Script]
